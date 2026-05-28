@@ -1,0 +1,41 @@
+Age (Month),Gender,Height,Nutrition Status
+6,male,56,severely stunted
+8,female,58,severely stunted
+12,male,63,severely stunted
+14,female,64,severely stunted
+18,male,68,severely stunted
+24,female,73,severely stunted
+30,male,77,severely stunted
+36,female,82,severely stunted
+48,male,90,severely stunted
+60,female,96,severely stunted
+6,female,61,stunted
+9,male,64,stunted
+12,female,67,stunted
+15,male,69,stunted
+20,female,74,stunted
+24,male,78,stunted
+30,female,83,stunted
+36,male,87,stunted
+48,female,96,stunted
+60,male,103,stunted
+6,male,67,normal
+9,female,70,normal
+12,male,75,normal
+15,female,77,normal
+20,male,82,normal
+24,female,86,normal
+30,male,91,normal
+36,female,96,normal
+48,male,105,normal
+60,female,112,normal
+6,female,73,tall
+9,male,76,tall
+12,female,81,tall
+15,male,84,tall
+20,female,90,tall
+24,male,95,tall
+30,female,100,tall
+36,male,106,tall
+48,female,116,tall
+60,male,124,tall

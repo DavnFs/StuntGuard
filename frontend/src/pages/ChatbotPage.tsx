@@ -1,0 +1,140 @@
+import { FormEvent, useState } from "react";
+import { Bot, Send, UserRound } from "lucide-react";
+
+import { ErrorBlock } from "../components/StateBlock";
+import { api } from "../services/api";
+
+interface Message {
+  role: "user" | "assistant";
+  text: string;
+  source?: "rule-based" | "llm";
+}
+
+const suggestions = [
+  "Apa itu stunting?",
+  "Makanan untuk mencegah stunting",
+  "Kapan harus ke Puskesmas?",
+  "Cara membaca hasil prediksi",
+  "Apa bedanya stunted dan severely stunted?",
+];
+
+export default function ChatbotPage() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      text: "Halo, saya dapat membantu edukasi umum tentang stunting dan cara membaca hasil skrining. Untuk diagnosis, tetap konsultasikan ke tenaga kesehatan.",
+      source: "rule-based",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const ask = async (message: string) => {
+    if (!message.trim()) return;
+    setMessages((items) => [...items, { role: "user", text: message }]);
+    setInput("");
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.chatbot(message);
+      setMessages((items) => [
+        ...items,
+        { role: "assistant", text: response.reply, source: response.source },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Chatbot gagal menjawab");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    ask(input);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-semibold text-brand-700">Edukasi Gizi</p>
+        <h2 className="mt-1 text-2xl font-bold text-slate-950">Chatbot Informasi Stunting</h2>
+      </div>
+
+      {error ? <ErrorBlock message={error} /> : null}
+
+      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="h-[520px] overflow-y-auto p-5">
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}`}
+                className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {message.role === "assistant" ? (
+                  <div className="mt-1 rounded-lg bg-brand-50 p-2 text-brand-700">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                ) : null}
+                <div
+                  className={`max-w-2xl rounded-lg px-4 py-3 text-sm leading-6 ${
+                    message.role === "user"
+                      ? "bg-brand-600 text-white"
+                      : "border border-slate-200 bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{message.text}</p>
+                  {message.source ? (
+                    <p className="mt-2 text-xs opacity-70">Sumber: {message.source}</p>
+                  ) : null}
+                </div>
+                {message.role === "user" ? (
+                  <div className="mt-1 rounded-lg bg-slate-100 p-2 text-slate-600">
+                    <UserRound className="h-4 w-4" />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            {loading ? (
+              <div className="text-sm text-slate-500">Menyiapkan jawaban...</div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 p-4">
+          <div className="mb-3 flex flex-wrap gap-2">
+            {suggestions.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => ask(item)}
+                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <form className="flex gap-2" onSubmit={submit}>
+            <input
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="Tulis pertanyaan edukasi..."
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              <Send className="h-4 w-4" />
+              Kirim
+            </button>
+          </form>
+          <p className="mt-3 text-xs text-slate-500">
+            Informasi bersifat edukasi umum dan bukan pengganti konsultasi tenaga kesehatan.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
