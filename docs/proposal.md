@@ -1,102 +1,73 @@
-# Proposal Project
+# Proposal Project: StuntGuard
 
 ## 1. Judul Project
 
-StuntGuard: Sistem Prediksi dan Monitoring Risiko Stunting pada Balita.
+StuntGuard: Web App Skrining Awal Risiko Stunting Balita Berbasis AI.
 
 ## 2. Latar Belakang Masalah
 
-Stunting masih menjadi masalah kesehatan masyarakat karena dapat memengaruhi pertumbuhan fisik, perkembangan kognitif, dan kualitas hidup anak. Posyandu dan Puskesmas memiliki peran penting dalam pemantauan tumbuh kembang balita, tetapi pencatatan manual sering menyulitkan analisis cepat terhadap kasus berisiko.
-
-StuntGuard dirancang sebagai aplikasi web untuk membantu kader atau petugas melakukan pencatatan tinggi badan, melihat riwayat pertumbuhan, dan mendapatkan hasil skrining awal berbasis AI. Sistem ini bukan pengganti diagnosis medis, melainkan alat bantu edukasi dan pendukung keputusan.
+Stunting masih menjadi masalah kesehatan anak karena dapat berkaitan dengan gangguan pertumbuhan jangka panjang. Orang tua sering membutuhkan alat bantu awal untuk memahami apakah hasil pengukuran tinggi dan berat anak perlu dipantau lebih lanjut. StuntGuard dibuat sebagai sistem skrining awal yang mudah digunakan, bukan sebagai diagnosis medis.
 
 ## 3. Tujuan Project
 
-- Membuat aplikasi web yang dapat mencatat data balita dan pemeriksaan tinggi badan.
-- Melatih model machine learning untuk memprediksi kategori status gizi berdasarkan usia, gender, dan tinggi badan.
-- Menyediakan dashboard monitoring kasus stunting dan tren pemeriksaan.
-- Menampilkan rekomendasi edukatif yang aman dan disertai disclaimer medis.
-- Menyediakan chatbot edukasi gizi dengan fallback rule-based.
+- Membantu orang tua melakukan cek risiko stunting tanpa login.
+- Membantu orang tua menyimpan riwayat pertumbuhan anak setelah login.
+- Membantu petugas Posyandu/Puskesmas melihat ringkasan kasus dan konsultasi.
+- Menyediakan edukasi gizi yang aman melalui chatbot edukatif.
 
 ## 4. Use Case / Manfaat
 
-- Kader Posyandu dapat mencatat data balita tanpa memakai identitas sensitif seperti NIK.
-- Petugas dapat melihat riwayat tinggi badan dan hasil skrining setiap balita.
-- Koordinator wilayah dapat memantau distribusi kasus berdasarkan status gizi, gender, dan wilayah Posyandu.
-- Orang tua memperoleh edukasi umum tentang stunting dan kapan perlu konsultasi ke Puskesmas.
+- Orang tua mengecek risiko awal menggunakan umur, gender, tinggi, dan berat.
+- Orang tua menyimpan pengukuran berkala anak.
+- Orang tua mengirim consultation ticket untuk tindak lanjut.
+- Admin/petugas melihat dashboard, high-risk cases, dan membalas ticket.
 
 ## 5. Arsitektur Sistem
 
-Sistem menggunakan arsitektur client-server sederhana:
-
-- Frontend React menerima input pengguna dan menampilkan dashboard.
-- Backend FastAPI menyediakan REST API.
-- SQLite menyimpan data balita dan pemeriksaan.
-- Model scikit-learn memprediksi status gizi.
-- Chatbot menggunakan fallback rule-based dan dapat memakai LLM jika API key tersedia.
+Frontend React mengirim request ke FastAPI. Backend menyimpan data ke SQLite dan memanggil modul ML scikit-learn untuk prediksi. Chatbot memakai rule-based fallback dan opsional LLM jika API key tersedia.
 
 ## 6. Teknologi yang Digunakan
 
-- Backend: Python, FastAPI, SQLAlchemy, SQLite
-- Machine Learning: pandas, scikit-learn, joblib
-- Frontend: React, Vite, TypeScript
-- Styling: Tailwind CSS
-- Charts: Recharts
-- Testing: pytest, FastAPI TestClient
+- Frontend: React, Vite, TypeScript, Tailwind CSS, Recharts
+- Backend: FastAPI, SQLAlchemy, SQLite
+- AI/ML: scikit-learn, pandas, joblib
+- Testing: pytest
 
 ## 7. Dataset
 
-Dataset utama berasal dari Kaggle: `rendiputra/stunting-balita-detection-121k-rows`.
-
-Kolom yang digunakan:
-
-- Age atau Age (Month)
-- Gender
-- Height
-- Nutrition Status
-
-Repository menyertakan `backend/data/sample_stunting_data.csv` hanya untuk demo lokal dan pengujian alur aplikasi. Sample ini bukan representasi dataset 121K baris.
+Dataset utama berasal dari Kaggle: Stunting Balita Detection 121K rows. Dataset asli dapat berisi `Age`, `Gender`, `Height`, dan `Nutrition Status`. Jika dataset lokal memiliki `weight_kg`, model penuh memakai tinggi dan berat. Jika tidak, sistem melatih `height-only-fallback-model` dan mencatat batasan tersebut.
 
 ## 8. AI Workflow
 
-1. Load dataset CSV dari `backend/data/`.
-2. Normalisasi nama kolom agar fleksibel.
-3. Bersihkan data usia, gender, tinggi badan, dan label status gizi.
-4. Latih beberapa model: Decision Tree, Random Forest, dan Logistic Regression.
-5. Evaluasi dengan accuracy, macro precision, macro recall, macro F1, confusion matrix, dan classification report.
-6. Pilih model terbaik berdasarkan macro F1.
-7. Simpan pipeline model dan metrics ke `backend/app/ml/model_artifacts/`.
-8. Backend memakai model tersimpan untuk prediksi API.
+Data dibersihkan, kolom dinormalisasi, gender dikodekan, lalu model dilatih. Untuk mode penuh, pipeline menggunakan `GrowthFeatureEngineer` yang menurunkan gap dan rasio tinggi/berat terhadap estimasi pertumbuhan umum. Model dipilih berdasarkan macro F1 dari hasil training lokal.
 
 ## 9. Timeline Pengerjaan
 
-Ringkasan timeline:
-
-- Minggu 1: Analisis kebutuhan, setup repository, desain arsitektur.
-- Minggu 2: Backend CRUD, database, dan endpoint prediksi.
-- Minggu 3: Training model, evaluasi, dan integrasi ML.
-- Minggu 4: Frontend dashboard, data balita, detail, dan prediksi.
-- Minggu 5: Chatbot edukasi, dokumentasi, testing, dan persiapan presentasi.
+1. Setup monorepo, backend, frontend, dan database.
+2. Implementasi training ML dan prediction API.
+3. Implementasi landing page, dashboard, CRUD anak, dan grafik pertumbuhan.
+4. Implementasi login demo, chatbot, dan consultation ticket.
+5. Testing, dokumentasi, dan persiapan demo.
 
 ## 10. Pembagian Tugas Anggota
 
-- Frontend developer: UI dashboard, data balita, detail, prediksi cepat, chatbot.
-- Backend developer: FastAPI, database, CRUD, dashboard API.
-- ML engineer: preprocessing, training, evaluasi, model artifact.
-- Documentation/testing: proposal, demo script, testing, slide outline.
+- Frontend developer: landing page, dashboard, form, chart, role UI.
+- Backend developer: FastAPI, database, CRUD, consultation ticket.
+- ML engineer: preprocessing, feature engineering, training, model info.
+- Documentation/testing: proposal, demo script, testing, presentasi.
 
 ## 11. Risiko dan Batasan Sistem
 
-- Sistem hanya menggunakan usia, gender, dan tinggi badan.
-- Faktor klinis lain seperti berat badan, riwayat penyakit, prematuritas, sanitasi, dan pola makan belum digunakan.
-- Label dataset kemungkinan sangat berkaitan dengan aturan z-score atau standar pertumbuhan.
-- Hasil prediksi tidak boleh dianggap diagnosis medis.
-- Metrics hanya valid untuk dataset lokal yang dipakai saat training.
+- StuntGuard bukan diagnosis medis.
+- Dataset lokal mungkin tidak memiliki berat badan.
+- Metrics hanya valid untuk dataset yang benar-benar digunakan saat training.
+- Auth masih demo sederhana, bukan keamanan produksi.
+- Faktor klinis lain seperti riwayat penyakit, sanitasi, dan asupan detail belum digunakan.
 
 ## 12. Rencana Pengembangan Lanjutan
 
-- Menambahkan berat badan, lingkar kepala, dan riwayat imunisasi.
-- Integrasi standar WHO Anthro atau kalkulasi z-score resmi.
-- Export laporan PDF/Excel untuk petugas.
-- Role-based access sederhana untuk kader, petugas Puskesmas, dan admin.
-- Integrasi IoT alat ukur tinggi badan jika waktu dan perangkat tersedia.
+- Integrasi standar antropometri resmi dan validasi dengan tenaga kesehatan.
+- Auth produksi dan pemisahan data per akun.
+- Export laporan PDF.
+- Integrasi notifikasi follow-up.
+- Dataset lebih lengkap dengan berat badan dan variabel kesehatan lain.

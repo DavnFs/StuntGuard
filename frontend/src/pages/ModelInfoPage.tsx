@@ -27,6 +27,8 @@ export default function ModelInfoPage() {
     const metrics = info?.metrics?.best_model_metrics;
     return metrics && typeof metrics === "object" ? (metrics as Record<string, unknown>) : null;
   }, [info]);
+  const metricsNote =
+    typeof info?.metrics?.metrics_note === "string" ? info.metrics.metrics_note : null;
 
   if (loading) return <LoadingBlock />;
   if (error) return <ErrorBlock message={error} />;
@@ -51,12 +53,26 @@ export default function ModelInfoPage() {
               <dd className="mt-1 font-semibold text-slate-950">{info.model_name}</dd>
             </div>
             <div className="rounded-lg border border-slate-200 p-4">
-              <dt className="text-sm text-slate-500">Fitur input</dt>
-              <dd className="mt-1 font-semibold text-slate-950">{info.features.join(", ")}</dd>
+              <dt className="text-sm text-slate-500">Mode aktif</dt>
+              <dd className="mt-1 font-semibold text-slate-950">{info.active_model_mode}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+              <dt className="text-sm text-slate-500">Fitur training</dt>
+              <dd className="mt-1 font-semibold text-slate-950">{info.trained_features.join(", ")}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+              <dt className="text-sm text-slate-500">Fitur turunan</dt>
+              <dd className="mt-1 font-semibold text-slate-950">
+                {info.engineered_features.length ? info.engineered_features.join(", ") : "Tidak tersedia pada fallback height-only"}
+              </dd>
             </div>
             <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
               <dt className="text-sm text-slate-500">Label prediksi</dt>
               <dd className="mt-1 font-semibold text-slate-950">{info.labels.join(", ")}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+              <dt className="text-sm text-slate-500">Weight tersedia saat training</dt>
+              <dd className="mt-1 font-semibold text-slate-950">{info.weight_available_during_training ? "Ya" : "Tidak"}</dd>
             </div>
           </dl>
         </section>
@@ -96,7 +112,8 @@ export default function ModelInfoPage() {
           </div>
         ) : (
           <p className="mt-4 text-sm text-slate-500">
-            Metrics belum tersedia. Jalankan training model dari folder backend untuk menghasilkan `metrics.json`.
+            {metricsNote ??
+              "Metrics belum tersedia. Jalankan training model dari folder backend untuk menghasilkan metrics.json."}
           </p>
         )}
       </section>
@@ -124,16 +141,28 @@ export default function ModelInfoPage() {
           </div>
         ) : (
           <p className="mt-4 text-sm text-slate-500">
-            Feature importance tersedia untuk Decision Tree atau Random Forest setelah training.
+            Feature importance tersedia untuk model tree-based scikit-learn setelah training.
           </p>
         )}
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 className="text-base font-semibold text-slate-950">Informasi Dataset Training</h3>
+        <pre className="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
+          {JSON.stringify(info.training_dataset_info, null, 2)}
+        </pre>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-base font-semibold text-slate-950">Catatan Dataset dan Batasan</h3>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Dataset menggunakan usia, gender, dan tinggi badan sebagai fitur. Label status gizi kemungkinan sangat berkaitan dengan aturan z-score atau standar pertumbuhan. Karena itu model cocok untuk demonstrasi skrining awal, bukan diagnosis medis lengkap. Faktor lain seperti berat badan, riwayat penyakit, prematuritas, pola makan, sanitasi, dan pemeriksaan klinis belum digunakan.
+          Dataset menggunakan usia, gender, tinggi badan, dan berat badan sebagai fitur. Label status gizi kemungkinan sangat berkaitan dengan aturan antropometri atau standar pertumbuhan. Karena itu model cocok untuk demonstrasi skrining awal, bukan diagnosis medis lengkap. Faktor lain seperti riwayat penyakit, prematuritas, pola makan, sanitasi, dan pemeriksaan klinis belum digunakan.
         </p>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">
+          {info.limitations.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </section>
     </div>
   );

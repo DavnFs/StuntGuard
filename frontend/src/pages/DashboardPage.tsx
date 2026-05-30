@@ -83,6 +83,10 @@ export default function DashboardPage() {
         <StatCard title="Risiko Stunting" value={`${summary.stunting_percentage}%`} icon={<TrendingUp className="h-5 w-5" />} tone="amber" />
       </div>
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard title="Anak Risiko Tinggi" value={summary.high_risk_children_count} icon={<AlertTriangle className="h-5 w-5" />} tone="red" />
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-950">Distribusi Status Gizi</h3>
@@ -115,6 +119,38 @@ export default function DashboardPage() {
                 <Bar dataKey="stunted" name="Stunted" stackId="a" fill={STATUS_COLORS.stunted} />
                 <Bar dataKey="severely stunted" name="Severely Stunted" stackId="a" fill={STATUS_COLORS["severely stunted"]} />
                 <Bar dataKey="tall" name="Tall" stackId="a" fill={STATUS_COLORS.tall} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-base font-semibold text-slate-950">Rata-rata Tinggi per Kelompok Usia</h3>
+          <div className="mt-4 h-72">
+            <ResponsiveContainer>
+              <BarChart data={summary.average_height_by_age_group}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="age_group" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="average_height_cm" name="Tinggi rata-rata (cm)" fill="#059669" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-base font-semibold text-slate-950">Rata-rata Berat per Kelompok Usia</h3>
+          <div className="mt-4 h-72">
+            <ResponsiveContainer>
+              <BarChart data={summary.average_weight_by_age_group}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="age_group" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="average_weight_kg" name="Berat rata-rata (kg)" fill="#0284c7" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -167,13 +203,14 @@ export default function DashboardPage() {
                 <th className="py-3 pr-4 font-semibold">Tanggal</th>
                 <th className="py-3 pr-4 font-semibold">Usia</th>
                 <th className="py-3 pr-4 font-semibold">Tinggi</th>
+                <th className="py-3 pr-4 font-semibold">Berat</th>
                 <th className="py-3 pr-4 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {summary.recent_high_risk_cases.length === 0 ? (
                 <tr>
-                  <td className="py-4 text-slate-500" colSpan={6}>
+                  <td className="py-4 text-slate-500" colSpan={7}>
                     Belum ada kasus risiko tinggi.
                   </td>
                 </tr>
@@ -185,6 +222,7 @@ export default function DashboardPage() {
                     <td className="py-3 pr-4 text-slate-600">{new Date(item.measurement_date).toLocaleDateString("id-ID")}</td>
                     <td className="py-3 pr-4 text-slate-600">{item.age_month} bulan</td>
                     <td className="py-3 pr-4 text-slate-600">{item.height_cm} cm</td>
+                    <td className="py-3 pr-4 text-slate-600">{item.weight_kg ?? "-"} kg</td>
                     <td className="py-3 pr-4">
                       <StatusBadge value={item.predicted_status} />
                     </td>

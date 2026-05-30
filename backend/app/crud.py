@@ -81,10 +81,12 @@ def create_measurement(
         measurement_date=payload.measurement_date,
         age_month=payload.age_month,
         height_cm=payload.height_cm,
+        weight_kg=payload.weight_kg,
         predicted_status=prediction.nutrition_status,
         risk_level=prediction.risk_level,
         confidence=prediction.confidence,
         recommendation=prediction.recommendation,
+        model_mode=prediction.model_mode,
     )
     db.add(measurement)
     db.commit()
@@ -95,3 +97,60 @@ def create_measurement(
 def delete_measurement(db: Session, measurement: models.Measurement) -> None:
     db.delete(measurement)
     db.commit()
+
+
+def list_consultations(
+    db: Session,
+    status: Optional[str] = None,
+    child_id: Optional[int] = None,
+) -> list[models.ConsultationTicket]:
+    query = db.query(models.ConsultationTicket)
+    if status:
+        query = query.filter(models.ConsultationTicket.status == status)
+    if child_id:
+        query = query.filter(models.ConsultationTicket.child_id == child_id)
+    return query.order_by(models.ConsultationTicket.created_at.desc()).all()
+
+
+def get_consultation(db: Session, consultation_id: int) -> Optional[models.ConsultationTicket]:
+    return (
+        db.query(models.ConsultationTicket)
+        .filter(models.ConsultationTicket.id == consultation_id)
+        .first()
+    )
+
+
+def create_consultation(
+    db: Session,
+    payload: schemas.ConsultationCreate,
+) -> models.ConsultationTicket:
+    ticket = models.ConsultationTicket(**payload.model_dump())
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+def reply_consultation(
+    db: Session,
+    ticket: models.ConsultationTicket,
+    payload: schemas.ConsultationReply,
+) -> models.ConsultationTicket:
+    ticket.admin_reply = payload.reply
+    ticket.status = payload.status
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+def update_consultation_status(
+    db: Session,
+    ticket: models.ConsultationTicket,
+    payload: schemas.ConsultationStatusUpdate,
+) -> models.ConsultationTicket:
+    ticket.status = payload.status
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket

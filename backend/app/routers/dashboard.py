@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from statistics import mean
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -84,10 +85,40 @@ def dashboard_summary(db: Session = Depends(get_db)):
             measurement_date=measurement.measurement_date,
             age_month=measurement.age_month,
             height_cm=measurement.height_cm,
+            weight_kg=measurement.weight_kg,
             predicted_status=measurement.predicted_status,
             risk_level=measurement.risk_level,
         )
         for measurement, child in recent_rows
+    ]
+
+    high_risk_children_count = (
+        db.query(models.Measurement.child_id)
+        .filter(models.Measurement.risk_level == "high")
+        .distinct()
+        .count()
+    )
+
+    age_group_rows = db.query(models.Measurement).all()
+    grouped: dict[str, dict[str, list[float]]] = OrderedDict()
+    for measurement in age_group_rows:
+        start = (measurement.age_month // 12) * 12
+        end = min(start + 11, 60)
+        label = f"{start}-{end} bulan"
+        grouped.setdefault(label, {"height": [], "weight": []})
+        grouped[label]["height"].append(float(measurement.height_cm))
+        if measurement.weight_kg is not None:
+            grouped[label]["weight"].append(float(measurement.weight_kg))
+
+    average_height_by_age_group = [
+        {"age_group": label, "average_height_cm": round(mean(values["height"]), 2)}
+        for label, values in grouped.items()
+        if values["height"]
+    ]
+    average_weight_by_age_group = [
+        {"age_group": label, "average_weight_kg": round(mean(values["weight"]), 2)}
+        for label, values in grouped.items()
+        if values["weight"]
     ]
 
     return schemas.DashboardSummary(
@@ -100,4 +131,7 @@ def dashboard_summary(db: Session = Depends(get_db)):
         count_by_posyandu_area=dict(area_counts),
         monthly_measurement_trend=monthly_trend,
         recent_high_risk_cases=recent_high_risk_cases,
+        average_height_by_age_group=average_height_by_age_group,
+        average_weight_by_age_group=average_weight_by_age_group,
+        high_risk_children_count=high_risk_children_count,
     )

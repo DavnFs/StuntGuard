@@ -1,63 +1,45 @@
 # Architecture
 
-StuntGuard memakai arsitektur monorepo sederhana dengan frontend React dan backend FastAPI.
+StuntGuard adalah web app publik untuk skrining awal stunting. Pengguna bisa melakukan quick check dari landing page tanpa login. Login hanya diperlukan untuk menyimpan riwayat anak, melihat grafik pertumbuhan, dan membuat consultation ticket.
 
 ```mermaid
 flowchart LR
-    User[Kader / Petugas Posyandu] --> Frontend[React + Vite UI]
-    Frontend -->|REST API| Backend[FastAPI Backend]
-    Backend --> Database[(SQLite)]
-    Backend --> ML[scikit-learn Model Pipeline]
-    Backend --> Chatbot[Rule-based Chatbot / Optional LLM]
-    ML --> Artifacts[(joblib model + metrics.json)]
+  Parent[Parent/Public User] --> FE[React + Vite Frontend]
+  Admin[Admin/Petugas] --> FE
+  FE --> API[FastAPI Backend]
+  API --> DB[(SQLite)]
+  API --> ML[scikit-learn Joblib Model]
+  API --> Chatbot[Rule-based Chatbot / Optional LLM]
+  ML --> Mode{Model Mode}
+  Mode --> Full[full-growth-model]
+  Mode --> Height[height-only-fallback-model]
+  Mode --> Rule[rule-based-fallback]
 ```
 
 ## Frontend
 
-Frontend bertugas menampilkan halaman dashboard, data balita, detail balita, prediksi cepat, chatbot edukasi, dan info model. Komunikasi API dipusatkan di `frontend/src/services/api.ts`.
+Frontend menyediakan landing page, quick stunting check, login demo, parent dashboard, admin dashboard, data balita, detail balita, grafik tinggi/berat, chatbot, consultation ticket, dan halaman model info.
 
 ## Backend
 
-Backend menyediakan endpoint:
+Backend FastAPI menyediakan endpoint:
 
-- `GET /health`
 - `POST /predict`
-- `GET/POST/PUT/DELETE /children`
-- `GET/POST /children/{id}/measurements`
-- `GET /dashboard/summary`
-- `POST /chatbot`
 - `GET /model/info`
+- CRUD children dan measurements
+- `GET /dashboard/summary`
+- `POST /auth/login`
+- Consultation ticket endpoints
+- `POST /chatbot`
 
 ## Database
 
-SQLite menyimpan dua tabel utama:
-
-- `children`: data balita demo tanpa NIK.
-- `measurements`: riwayat pemeriksaan tinggi badan dan hasil prediksi.
-
-Relasi: satu balita memiliki banyak pemeriksaan.
+SQLite menyimpan data demo anak, pemeriksaan, hasil prediksi, model mode, dan ticket konsultasi.
 
 ## ML Model
 
-Model disimpan sebagai pipeline joblib. Pipeline menerima fitur:
-
-- `age_month`
-- `gender`
-- `height_cm`
-
-Output model:
-
-- `severely stunted`
-- `stunted`
-- `normal`
-- `tall`
-
-Jika model belum tersedia atau gagal dimuat, API memakai fallback demo yang ditandai jelas dan confidence bernilai `null`.
+Model dilatih dengan scikit-learn dan disimpan sebagai joblib. Jika dataset memiliki berat badan, mode aktif adalah `full-growth-model`. Jika tidak, training membuat `height-only-fallback-model` agar demo tetap stabil tanpa memalsukan data berat.
 
 ## Chatbot
 
-Chatbot memiliki fallback rule-based untuk pertanyaan umum. Jika `OPENAI_API_KEY` tersedia, backend mencoba memakai LLM. Bila gagal, sistem tetap kembali ke rule-based sehingga aplikasi tetap bisa berjalan offline.
-
-## Disclaimer
-
-Semua prediksi dan rekomendasi adalah skrining awal serta edukasi. Diagnosis dan intervensi resmi harus dilakukan oleh tenaga kesehatan atau Puskesmas.
+Chatbot default rule-based. Jika `OPENAI_API_KEY` tersedia, backend bisa memakai LLM opsional. Jawaban selalu bersifat edukatif dan bukan diagnosis.

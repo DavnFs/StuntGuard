@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarPlus, LineChart as LineChartIcon, Ruler } from "lucide-react";
+import { ArrowLeft, CalendarPlus, LineChart as LineChartIcon, MessageSquareText, Ruler } from "lucide-react";
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -31,6 +32,7 @@ export default function ChildDetailPage() {
     measurement_date: today,
     age_month: 24,
     height_cm: 80,
+    weight_kg: 9.2,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,6 +65,7 @@ export default function ChildDetailPage() {
       measurements.map((item) => ({
         age_month: item.age_month,
         height_cm: item.height_cm,
+        weight_kg: item.weight_kg,
         status: item.predicted_status,
       })),
     [measurements],
@@ -90,7 +93,7 @@ export default function ChildDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/children" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
+      <Link to="/app/children" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
         <ArrowLeft className="h-4 w-4" />
         Kembali ke Data Balita
       </Link>
@@ -116,16 +119,19 @@ export default function ChildDetailPage() {
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <LineChartIcon className="h-5 w-5 text-brand-700" />
-            <h3 className="text-base font-semibold text-slate-950">Tren Pertumbuhan Tinggi Badan</h3>
+            <h3 className="text-base font-semibold text-slate-950">Tren Tinggi dan Berat Badan</h3>
           </div>
           <div className="mt-4 h-80">
             <ResponsiveContainer>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="age_month" label={{ value: "Usia (bulan)", position: "insideBottom", offset: -2 }} />
-                <YAxis dataKey="height_cm" label={{ value: "cm", angle: -90, position: "insideLeft" }} />
+                <YAxis yAxisId="height" dataKey="height_cm" label={{ value: "cm", angle: -90, position: "insideLeft" }} />
+                <YAxis yAxisId="weight" orientation="right" dataKey="weight_kg" label={{ value: "kg", angle: 90, position: "insideRight" }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="height_cm" name="Tinggi Badan" stroke="#059669" strokeWidth={3} />
+                <Legend />
+                <Line yAxisId="height" type="monotone" dataKey="height_cm" name="Tinggi Badan (cm)" stroke="#059669" strokeWidth={3} />
+                <Line yAxisId="weight" type="monotone" dataKey="weight_kg" name="Berat Badan (kg)" stroke="#0284c7" strokeWidth={3} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -172,6 +178,19 @@ export default function ChildDetailPage() {
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
               />
             </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Berat Badan (kg)
+              <input
+                required
+                type="number"
+                min={1}
+                max={60}
+                step={0.1}
+                value={form.weight_kg}
+                onChange={(event) => setForm({ ...form, weight_kg: Number(event.target.value) })}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+              />
+            </label>
             <button
               type="submit"
               disabled={saving}
@@ -189,6 +208,14 @@ export default function ChildDetailPage() {
                 <StatusBadge value={latestResult.risk_level} type="risk" />
               </div>
               <p className="mt-3 text-sm text-slate-700">{latestResult.recommendation}</p>
+              <p className="mt-2 text-xs font-semibold text-slate-600">Mode model: {latestResult.model_mode}</p>
+              <Link
+                to="/app/consultations"
+                className="mt-3 inline-flex items-center gap-2 rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+              >
+                <MessageSquareText className="h-3.5 w-3.5" />
+                Ajukan Konsultasi
+              </Link>
               <p className="mt-3 text-xs text-slate-500">{DISCLAIMER}</p>
             </div>
           ) : null}
@@ -204,15 +231,17 @@ export default function ChildDetailPage() {
                 <th className="py-3 pr-4 font-semibold">Tanggal</th>
                 <th className="py-3 pr-4 font-semibold">Usia</th>
                 <th className="py-3 pr-4 font-semibold">Tinggi</th>
+                <th className="py-3 pr-4 font-semibold">Berat</th>
                 <th className="py-3 pr-4 font-semibold">Status</th>
                 <th className="py-3 pr-4 font-semibold">Risiko</th>
+                <th className="py-3 pr-4 font-semibold">Model</th>
                 <th className="py-3 pr-4 font-semibold">Rekomendasi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {measurements.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-5 text-center text-slate-500">
+                  <td colSpan={8} className="py-5 text-center text-slate-500">
                     Belum ada pemeriksaan.
                   </td>
                 </tr>
@@ -222,8 +251,10 @@ export default function ChildDetailPage() {
                     <td className="py-3 pr-4 text-slate-600">{new Date(item.measurement_date).toLocaleDateString("id-ID")}</td>
                     <td className="py-3 pr-4 text-slate-600">{item.age_month} bulan</td>
                     <td className="py-3 pr-4 text-slate-600">{item.height_cm} cm</td>
+                    <td className="py-3 pr-4 text-slate-600">{item.weight_kg ?? "-"} kg</td>
                     <td className="py-3 pr-4"><StatusBadge value={item.predicted_status} /></td>
                     <td className="py-3 pr-4"><StatusBadge value={item.risk_level} type="risk" /></td>
+                    <td className="py-3 pr-4 text-xs text-slate-600">{item.model_mode}</td>
                     <td className="max-w-md py-3 pr-4 text-slate-600">{item.recommendation}</td>
                   </tr>
                 ))

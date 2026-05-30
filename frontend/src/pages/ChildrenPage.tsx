@@ -136,7 +136,7 @@ export default function ChildrenPage() {
                     filteredChildren.map((child) => (
                       <tr key={child.id}>
                         <td className="py-3 pr-4">
-                          <Link to={`/children/${child.id}`} className="font-semibold text-brand-700 hover:text-brand-800">
+                          <Link to={`/app/children/${child.id}`} className="font-semibold text-brand-700 hover:text-brand-800">
                             {child.name}
                           </Link>
                         </td>

@@ -1,46 +1,38 @@
-# Timeline Pengerjaan
+# Timeline
 
-## Minggu 1: Analisis dan Setup
+## Minggu 1
 
-- Finalisasi ide project dan ruang lingkup.
-- Studi dataset dan kebutuhan fitur.
-- Setup monorepo backend, frontend, dan docs.
-- Desain arsitektur awal dan pembagian tugas.
+- Finalisasi ide StuntGuard dan scope MVP.
+- Setup monorepo, FastAPI, React, SQLite.
+- Buat proposal awal dan pembagian tugas.
 
-## Minggu 2: Backend Core
+## Minggu 2
 
-- Implementasi FastAPI.
-- Setup SQLite dan SQLAlchemy.
-- CRUD data balita.
-- CRUD pemeriksaan.
-- Endpoint health dan struktur response.
+- Implementasi CRUD anak dan pemeriksaan.
+- Implementasi prediction API.
+- Implementasi landing page dan quick check.
 
-## Minggu 3: Machine Learning
+## Minggu 3
 
-- Preprocessing dataset.
-- Training Decision Tree, Random Forest, dan Logistic Regression.
-- Evaluasi metrics.
-- Simpan model artifact.
-- Integrasi endpoint `/predict` dan `/model/info`.
+- Implementasi training script scikit-learn.
+- Tambahkan GrowthFeatureEngineer.
+- Tambahkan mode full-growth dan height-only fallback.
+- Tambahkan dashboard analytics.
 
-## Minggu 4: Frontend Core
+## Minggu 4
 
-- Layout aplikasi dan navigasi.
-- Dashboard analytics.
-- Halaman Data Balita dan Detail Balita.
-- Form pemeriksaan dan grafik pertumbuhan.
-- Halaman Prediksi Cepat.
+- Implementasi login demo parent/admin.
+- Implementasi parent dashboard, admin dashboard, dan consultation ticket.
+- Implementasi chatbot edukasi.
 
-## Minggu 5: Edukasi, Testing, dan Presentasi
+## Minggu 5
 
-- Chatbot edukasi rule-based.
-- Dokumentasi proposal, arsitektur, AI workflow, demo script.
-- Testing backend dan build frontend.
-- Persiapan slide dan latihan demo 10-15 menit.
+- Testing backend dan frontend.
+- Perapihan UI.
+- Update dokumentasi, demo script, dan slide outline.
 
-## Buffer
+## Minggu 6
 
-- Perbaikan bug.
-- Penyesuaian UI.
-- Training ulang jika dataset asli sudah tersedia.
-- Finalisasi disclaimer dan narasi presentasi.
+- Latihan demo 10-15 menit.
+- Final check dataset/model mode.
+- Persiapan presentasi.

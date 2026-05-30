@@ -13,6 +13,10 @@ body {
   color: #0f172a;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 button,
 input,
 select,

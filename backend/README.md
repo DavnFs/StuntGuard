@@ -1,6 +1,6 @@
 # StuntGuard Backend
 
-FastAPI backend untuk skrining awal risiko stunting pada balita. API ini menyediakan CRUD data balita, pemeriksaan tinggi badan, prediksi status gizi, dashboard, info model, dan chatbot edukasi.
+FastAPI backend untuk StuntGuard. API ini menyediakan prediksi publik, CRUD data balita, pemeriksaan tinggi dan berat badan, dashboard, info model, chatbot edukasi, login demo, dan consultation ticket.
 
 ## Setup
 
@@ -27,6 +27,19 @@ python -m app.ml.train_model --csv data/stunting_balita.csv
 
 Metrics akan tersimpan di `app/ml/model_artifacts/metrics.json`. Nilai metrics selalu dihasilkan oleh script dari dataset lokal yang dipakai.
 
+Jika dataset memiliki `weight_kg`, script melatih `full-growth-model` memakai `GrowthFeatureEngineer`. Jika dataset tidak memiliki `weight_kg`, script melatih `height-only-fallback-model` dan memberi warning agar metrics tidak diklaim sebagai model tinggi+berat penuh.
+
+## Menggunakan Model dari Notebook
+
+Backend juga mendukung format notebook `modelstunting.ipynb` yang mengekspor `MLPClassifier` dan `StandardScaler` secara terpisah. Salin kedua file ini ke `app/ml/model_artifacts/`:
+
+```text
+stunting_model.joblib
+scaler.joblib
+```
+
+Format input model notebook harus tetap berurutan: umur bulan, gender encoded (`Laki-laki/male=0`, `Perempuan/female=1`), tinggi cm, dan berat kg. Label angka otomatis dipetakan menjadi `severely stunted`, `stunted`, `normal`, dan `tall`.
+
 ## Seed Data Demo
 
 ```bash
@@ -48,8 +61,17 @@ Endpoint penting:
 - `GET /children/{id}/measurements`
 - `POST /children/{id}/measurements`
 - `GET /dashboard/summary`
+- `POST /auth/login`
+- `GET /consultations`
+- `POST /consultations`
+- `POST /consultations/{id}/reply`
 - `POST /chatbot`
 - `GET /model/info`
+
+Demo login:
+
+- `parent@demo.com` / `password`
+- `admin@demo.com` / `password`
 
 ## Disclaimer
 

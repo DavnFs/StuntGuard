@@ -1,49 +1,15 @@
 # Presentation Outline
 
-## Slide 1: Title
-
-StuntGuard: Sistem Prediksi dan Monitoring Risiko Stunting pada Balita.
-
-## Slide 2: Background
-
-Stunting adalah masalah kesehatan yang membutuhkan pemantauan tumbuh kembang rutin di Posyandu/Puskesmas.
-
-## Slide 3: Problem Statement
-
-Pencatatan manual menyulitkan monitoring cepat, riwayat pertumbuhan, dan prioritas tindak lanjut kasus berisiko.
-
-## Slide 4: Proposed Solution
-
-Aplikasi web AI untuk mencatat data balita, menyimpan pemeriksaan, memprediksi status gizi, dan memberi rekomendasi edukatif.
-
-## Slide 5: Dataset
-
-Kaggle Stunting Balita Detection 121K rows dengan fitur usia, gender, tinggi badan, dan label status gizi.
-
-## Slide 6: System Architecture
-
-React frontend, FastAPI backend, SQLite database, scikit-learn model, rule-based chatbot.
-
-## Slide 7: AI Workflow
-
-Preprocessing, training Decision Tree/Random Forest/Logistic Regression, evaluasi metrics, pemilihan model berdasarkan macro F1.
-
-## Slide 8: Application Features
-
-Dashboard, CRUD data balita, riwayat pemeriksaan, prediksi cepat, grafik pertumbuhan, rekomendasi, chatbot edukasi, info model.
-
-## Slide 9: Demo Flow
-
-Dashboard, tambah balita, tambah pemeriksaan, prediksi, grafik pertumbuhan, chatbot, info model.
-
-## Slide 10: Results and Limitations
-
-Tampilkan metrics dari training lokal jika tersedia. Jelaskan batasan fitur dan disclaimer medis.
-
-## Slide 11: Future Development
-
-WHO z-score resmi, fitur berat badan, laporan PDF/Excel, role access, integrasi IoT alat ukur.
-
-## Slide 12: Closing
-
-StuntGuard membantu skrining awal dan monitoring, tetapi keputusan medis tetap oleh tenaga kesehatan.
+1. Title: StuntGuard
+2. Background: stunting dan kebutuhan skrining awal
+3. Problem Statement: orang tua butuh alat bantu awal yang aman dan mudah
+4. Proposed Solution: web app publik + riwayat anak + konsultasi petugas
+5. Dataset: Kaggle stunting balita, isu ketersediaan weight_kg
+6. System Architecture: React, FastAPI, SQLite, scikit-learn, chatbot
+7. AI Workflow: preprocessing, GrowthFeatureEngineer, model candidates, evaluation
+8. Model Modes: full-growth-model, height-only-fallback-model, rule-based-fallback
+9. Application Features: landing quick check, parent dashboard, admin dashboard, consultation ticket
+10. Demo Flow: quick check, chatbot, login parent, save measurement, admin reply
+11. Results and Limitations: metrics dari training lokal saja, bukan diagnosis medis
+12. Future Development: validasi medis, auth produksi, dataset lebih lengkap, laporan PDF
+13. Closing: StuntGuard sebagai skrining awal dan edukasi aman

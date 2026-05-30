@@ -33,10 +33,29 @@ class Measurement(Base):
     measurement_date = Column(Date, nullable=False, index=True)
     age_month = Column(Integer, nullable=False)
     height_cm = Column(Float, nullable=False)
+    weight_kg = Column(Float, nullable=True)
     predicted_status = Column(String(40), nullable=False, index=True)
     risk_level = Column(String(20), nullable=False, index=True)
     confidence = Column(Float, nullable=True)
     recommendation = Column(Text, nullable=False)
+    model_mode = Column(String(40), nullable=False, default="rule-based-fallback")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     child = relationship("Child", back_populates="measurements")
+
+
+class ConsultationTicket(Base):
+    __tablename__ = "consultation_tickets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    child_id = Column(Integer, ForeignKey("children.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject = Column(String(160), nullable=False)
+    message = Column(Text, nullable=False)
+    latest_measurement_id = Column(Integer, ForeignKey("measurements.id", ondelete="SET NULL"), nullable=True)
+    status = Column(String(20), nullable=False, default="pending", index=True)
+    admin_reply = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    child = relationship("Child")
+    latest_measurement = relationship("Measurement")

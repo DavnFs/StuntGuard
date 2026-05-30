@@ -1,43 +1,42 @@
 # Team Roles
 
-## Opsi Tim 3 Orang
+## Opsi Kelompok 3 Orang
 
-### 1. Frontend Developer
+## 1. Frontend Developer
 
-- Membuat layout dan navigasi.
-- Mengembangkan dashboard, data balita, detail balita, prediksi cepat, chatbot, dan info model.
-- Menghubungkan UI ke API backend.
+- Landing page dan quick check.
+- Parent/admin layout.
+- Form anak, pemeriksaan, konsultasi.
+- Dashboard chart dan responsive UI.
 
-### 2. Backend Developer
+## 2. Backend + Database Developer
 
-- Membuat FastAPI endpoint.
-- Mendesain SQLite schema.
-- Implementasi CRUD balita dan pemeriksaan.
-- Membuat dashboard aggregation dan error handling.
+- FastAPI endpoints.
+- SQLite models dan migrasi ringan.
+- CRUD anak, pemeriksaan, consultation ticket.
+- Demo login role parent/admin.
 
-### 3. ML Engineer + Documentation
+## 3. ML Engineer + Documentation
 
-- Mengolah dataset.
-- Melatih dan mengevaluasi model.
-- Menyimpan model artifact dan metrics.
-- Menulis dokumentasi AI workflow, proposal, demo script, dan slide outline.
+- Dataset preprocessing.
+- GrowthFeatureEngineer.
+- Training script dan model info.
+- Testing, README, demo script, slide outline.
 
-## Opsi Tim 4 Orang
+## Opsi Kelompok 4 Orang
 
-### 1. Frontend Developer
+## 1. Frontend Developer
 
-- Fokus pada React UI, responsive layout, charts, dan state handling.
+- UI landing, parent pages, admin pages, charts.
 
-### 2. Backend Developer
+## 2. Backend Developer
 
-- Fokus pada FastAPI, SQLAlchemy, CRUD, dashboard API, dan integrasi prediksi.
+- FastAPI, database, CRUD, auth demo, consultation ticket.
 
-### 3. ML Engineer
+## 3. ML Engineer
 
-- Fokus pada preprocessing, training model, evaluasi, model info, dan analisis batasan.
+- Dataset handling, fallback training mode, model evaluation, joblib artifacts.
 
-### 4. Documentation / Presentation / Testing
+## 4. Documentation / Testing / Presentation
 
-- Menulis proposal, arsitektur, demo script, timeline, dan slide outline.
-- Menjalankan testing backend dan frontend.
-- Menyiapkan narasi demo dan memastikan disclaimer konsisten.
+- Proposal, architecture, AI workflow, demo script, test checklist, slide outline.

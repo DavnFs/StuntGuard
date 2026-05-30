@@ -33,6 +33,10 @@ RULES = [
         ["bedanya stunted", "severely stunted", "stunted dan severely"],
         "Stunted menunjukkan tinggi badan lebih rendah dari standar usia, sedangkan severely stunted lebih berat. Keduanya perlu perhatian, tetapi severely stunted harus diprioritaskan untuk tindak lanjut tenaga kesehatan.",
     ),
+    (
+        ["berat badan", "tinggi badan", "pentingnya berat", "pentingnya tinggi"],
+        "Tinggi badan membantu melihat pertumbuhan linear jangka panjang, sedangkan berat badan membantu melihat kondisi pertumbuhan saat ini. Keduanya perlu dipantau bersama usia dan jenis kelamin agar skrining lebih informatif.",
+    ),
 ]
 
 DEFAULT_REPLY = (
@@ -45,8 +49,8 @@ def rule_based_reply(message: str) -> str:
     normalized = message.strip().lower()
     for keywords, reply in RULES:
         if any(keyword in normalized for keyword in keywords):
-            return f"{reply}\n\n{DISCLAIMER}"
-    return f"{DEFAULT_REPLY}\n\n{DISCLAIMER}"
+            return f"{reply}\n\nInformasi ini bersifat edukasi dan tidak menggantikan konsultasi langsung dengan tenaga kesehatan.\n\n{DISCLAIMER}"
+    return f"{DEFAULT_REPLY}\n\nInformasi ini bersifat edukasi dan tidak menggantikan konsultasi langsung dengan tenaga kesehatan.\n\n{DISCLAIMER}"
 
 
 def llm_reply(message: str) -> str | None:

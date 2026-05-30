@@ -1,6 +1,9 @@
 export type Gender = "male" | "female";
 export type NutritionStatus = "severely stunted" | "stunted" | "normal" | "tall";
 export type RiskLevel = "high" | "medium" | "low" | "monitor";
+export type ModelMode = "full-growth-model" | "height-only-fallback-model" | "rule-based-fallback";
+export type UserRole = "parent" | "admin";
+export type ConsultationStatus = "pending" | "answered" | "closed";
 
 export interface Child {
   id: number;
@@ -26,6 +29,7 @@ export interface PredictionRequest {
   age_month: number;
   gender: Gender;
   height_cm: number;
+  weight_kg: number;
 }
 
 export interface PredictionResponse {
@@ -33,6 +37,13 @@ export interface PredictionResponse {
   risk_level: RiskLevel;
   confidence: number | null;
   recommendation: string;
+  growth_notes: {
+    height_gap_expected: number | null;
+    height_expected_ratio: number | null;
+    weight_gap_expected: number | null;
+    weight_expected_ratio: number | null;
+  };
+  model_mode: ModelMode;
   disclaimer: string;
 }
 
@@ -40,6 +51,7 @@ export interface MeasurementInput {
   measurement_date: string;
   age_month: number;
   height_cm: number;
+  weight_kg: number;
 }
 
 export interface Measurement {
@@ -48,10 +60,12 @@ export interface Measurement {
   measurement_date: string;
   age_month: number;
   height_cm: number;
+  weight_kg: number | null;
   predicted_status: NutritionStatus;
   risk_level: RiskLevel;
   confidence: number | null;
   recommendation: string;
+  model_mode: ModelMode;
   created_at: string;
 }
 
@@ -62,6 +76,7 @@ export interface RecentHighRiskCase {
   measurement_date: string;
   age_month: number;
   height_cm: number;
+  weight_kg: number | null;
   predicted_status: NutritionStatus;
   risk_level: RiskLevel;
 }
@@ -76,6 +91,9 @@ export interface DashboardSummary {
   count_by_posyandu_area: Record<string, number>;
   monthly_measurement_trend: Array<{ month: string; count: number }>;
   recent_high_risk_cases: RecentHighRiskCase[];
+  average_height_by_age_group: Array<{ age_group: string; average_height_cm: number }>;
+  average_weight_by_age_group: Array<{ age_group: string; average_weight_kg: number }>;
+  high_risk_children_count: number;
 }
 
 export interface ChatResponse {
@@ -84,10 +102,48 @@ export interface ChatResponse {
 }
 
 export interface ModelInfo {
+  active_model_mode: ModelMode;
   model_name: string;
   metrics: Record<string, unknown> | null;
+  trained_features: string[];
+  engineered_features: string[];
   features: string[];
   labels: string[];
   feature_importance: Array<{ feature: string; importance: number }> | null;
+  training_dataset_info: Record<string, unknown>;
+  weight_available_during_training: boolean;
+  limitations: string[];
   disclaimer: string;
+}
+
+export interface AuthUser {
+  token: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface Consultation {
+  id: number;
+  child_id: number;
+  child_name: string;
+  subject: string;
+  message: string;
+  latest_measurement_id?: number | null;
+  status: ConsultationStatus;
+  admin_reply?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConsultationInput {
+  child_id: number;
+  subject: string;
+  message: string;
+  latest_measurement_id?: number | null;
 }

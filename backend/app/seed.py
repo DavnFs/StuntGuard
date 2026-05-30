@@ -15,8 +15,8 @@ DEMO_CHILDREN = [
         "address": "Data demo, bukan identitas asli",
         "posyandu_area": "Melati",
         "measurements": [
-            {"measurement_date": date(2025, 6, 10), "age_month": 33, "height_cm": 89.5},
-            {"measurement_date": date(2025, 7, 10), "age_month": 34, "height_cm": 90.3},
+            {"measurement_date": date(2025, 6, 10), "age_month": 33, "height_cm": 89.5, "weight_kg": 12.3},
+            {"measurement_date": date(2025, 7, 10), "age_month": 34, "height_cm": 90.3, "weight_kg": 12.7},
         ],
     },
     {
@@ -27,8 +27,8 @@ DEMO_CHILDREN = [
         "address": "Data demo, bukan identitas asli",
         "posyandu_area": "Mawar",
         "measurements": [
-            {"measurement_date": date(2025, 6, 12), "age_month": 27, "height_cm": 76.2},
-            {"measurement_date": date(2025, 7, 12), "age_month": 28, "height_cm": 77.0},
+            {"measurement_date": date(2025, 6, 12), "age_month": 27, "height_cm": 76.2, "weight_kg": 8.4},
+            {"measurement_date": date(2025, 7, 12), "age_month": 28, "height_cm": 77.0, "weight_kg": 8.6},
         ],
     },
     {
@@ -39,8 +39,8 @@ DEMO_CHILDREN = [
         "address": "Data demo, bukan identitas asli",
         "posyandu_area": "Kenanga",
         "measurements": [
-            {"measurement_date": date(2025, 6, 15), "age_month": 17, "height_cm": 82.0},
-            {"measurement_date": date(2025, 7, 15), "age_month": 18, "height_cm": 83.0},
+            {"measurement_date": date(2025, 6, 15), "age_month": 17, "height_cm": 82.0, "weight_kg": 10.4},
+            {"measurement_date": date(2025, 7, 15), "age_month": 18, "height_cm": 83.0, "weight_kg": 10.8},
         ],
     },
 ]
@@ -68,6 +68,7 @@ def seed() -> None:
                         age_month=payload.age_month,
                         gender=child.gender,
                         height_cm=payload.height_cm,
+                        weight_kg=payload.weight_kg,
                     )
                 )
                 create_measurement(db, child.id, payload, prediction)

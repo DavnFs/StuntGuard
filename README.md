@@ -1,21 +1,20 @@
 # StuntGuard
 
-StuntGuard adalah aplikasi web untuk skrining awal dan monitoring risiko stunting pada balita. Aplikasi ini ditujukan untuk demo proyek universitas berbasis AI, dengan fitur pencatatan data balita, riwayat pemeriksaan tinggi badan, prediksi status gizi, dashboard analytics, rekomendasi edukatif, dan chatbot gizi sederhana.
+StuntGuard adalah web app skrining awal stunting yang membantu orang tua mengecek risiko stunting balita secara cepat menggunakan umur, jenis kelamin, tinggi badan, dan berat badan. Aplikasi ini juga menyediakan edukasi gizi berbasis AI, riwayat pertumbuhan anak, konsultasi lanjutan dengan petugas, serta dashboard monitoring untuk Posyandu/Puskesmas.
 
-Hasil prediksi bukan diagnosis medis. Semua hasil harus dikonsultasikan dengan tenaga kesehatan atau Puskesmas untuk keputusan resmi.
+Hasil StuntGuard bukan diagnosis medis. Pemeriksaan dan keputusan resmi tetap harus dikonsultasikan ke petugas kesehatan atau Puskesmas.
 
 ## Features
 
-- FastAPI prediction API.
-- CRUD data balita tanpa NIK atau identitas sensitif.
-- Riwayat pemeriksaan tinggi badan.
-- Prediksi status: severely stunted, stunted, normal, tall.
-- Risk level dan rekomendasi edukatif.
-- Dashboard analytics dengan charts.
-- Growth tracking per balita.
-- Chatbot edukasi rule-based dengan optional LLM.
-- ML training workflow dengan scikit-learn.
-- Dokumentasi proposal, arsitektur, demo, dan presentasi.
+- Landing page publik dengan quick stunting check tanpa login.
+- Input prediksi: `age_month`, `gender`, `height_cm`, `weight_kg`.
+- Output prediksi dengan status gizi, risk level, confidence, growth notes, model mode, rekomendasi, dan disclaimer.
+- Login demo role-based: parent dan admin.
+- Parent flow: simpan data anak, tambah pemeriksaan, lihat grafik tinggi dan berat, ajukan consultation ticket.
+- Admin flow: dashboard monitoring, data balita, data pemeriksaan, high-risk cases, balas consultation ticket.
+- Chatbot edukasi gizi rule-based dengan optional OpenAI LLM jika `OPENAI_API_KEY` tersedia.
+- Training workflow scikit-learn dengan mode `full-growth-model` atau `height-only-fallback-model`.
+- SQLite database untuk data demo lokal.
 
 ## Tech Stack
 
@@ -51,6 +50,7 @@ StuntGuard/
       types/
     package.json
   docs/
+  package.json
   README.md
 ```
 
@@ -63,17 +63,43 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
+Jika memakai `.venv` di root project yang sudah ada:
+
+```bash
+.\.venv\Scripts\activate
+cd backend
+python -m pip install -r requirements.txt
+```
+
+## Setup Frontend
+
+```bash
+cd frontend
+npm install
+```
+
+Opsional buat `frontend/.env`:
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
 ## Dataset Setup
 
-Dataset utama: `https://www.kaggle.com/datasets/rendiputra/stunting-balita-detection-121k-rows`
+Dataset awal: `https://www.kaggle.com/datasets/rendiputra/stunting-balita-detection-121k-rows`
 
-Unduh dataset dari Kaggle, lalu letakkan CSV di:
+Letakkan CSV di:
 
 ```text
 backend/data/stunting_balita.csv
 ```
 
-Repository menyertakan `backend/data/sample_stunting_data.csv` hanya untuk demo lokal. Sample ini bukan representasi dataset 121K baris.
+Catatan penting:
+
+- Dataset Kaggle asli mungkin hanya berisi usia, gender, tinggi badan, dan nutrition status.
+- Jika CSV memiliki `weight_kg`, training menghasilkan `full-growth-model`.
+- Jika CSV tidak memiliki `weight_kg`, script training tetap jalan sebagai `height-only-fallback-model` dan metriknya tidak boleh diklaim sebagai metrik model tinggi+berat penuh.
+- Repository menyertakan sample CSV kecil hanya untuk demo lokal, bukan representasi dataset 121K.
 
 ## Training Model
 
@@ -84,20 +110,30 @@ cd backend
 python -m app.ml.train_model --csv data/sample_stunting_data.csv
 ```
 
-Dengan dataset Kaggle:
+Dengan dataset lokal:
 
 ```bash
 cd backend
 python -m app.ml.train_model --csv data/stunting_balita.csv
 ```
 
-Training script menghasilkan:
+Training menghasilkan artefak di:
 
-- `backend/app/ml/model_artifacts/stunting_model.joblib`
-- `backend/app/ml/model_artifacts/metrics.json`
-- `backend/app/ml/model_artifacts/labels.json`
+```text
+backend/app/ml/model_artifacts/stunting_model.joblib
+backend/app/ml/model_artifacts/metrics.json
+backend/app/ml/model_artifacts/labels.json
+backend/app/ml/model_artifacts/normal_values.csv
+```
 
-Metrics tidak dibuat manual. Nilainya berasal dari dataset yang dipakai saat training.
+Model dari `modelstunting.ipynb` juga didukung jika memakai:
+
+```text
+backend/app/ml/model_artifacts/stunting_model.joblib
+backend/app/ml/model_artifacts/scaler.joblib
+```
+
+Format notebook tersebut memakai urutan fitur: umur bulan, gender encoded (`male=0`, `female=1`), tinggi cm, dan berat kg.
 
 ## Seed Demo Data
 
@@ -106,55 +142,61 @@ cd backend
 python -m app.seed
 ```
 
-## Run Backend
+## Running the App
+
+Dari root project:
+
+```bash
+npm run dev
+```
+
+URL:
+
+- Frontend: `http://127.0.0.1:5173`
+- Backend: `http://127.0.0.1:8000`
+- API docs: `http://127.0.0.1:8000/docs`
+
+Manual mode:
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
-
-API docs tersedia di `http://localhost:8000/docs`.
-
-## Setup Frontend
-
-```bash
-cd frontend
-npm install
-```
-
-Opsional buat `.env`:
-
-```bash
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-## Run Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Buka `http://localhost:5173`.
+## Demo Accounts
+
+- Parent: `parent@demo.com` / `password`
+- Admin: `admin@demo.com` / `password`
+
+Auth ini hanya demo role switcher sederhana, bukan sistem keamanan produksi.
 
 ## Demo Flow
 
-1. Jalankan backend dan frontend.
-2. Buka Dashboard.
-3. Tambahkan data balita demo di Data Balita.
-4. Buka detail balita dan tambah pemeriksaan.
-5. Lihat hasil prediksi, rekomendasi, disclaimer, dan grafik pertumbuhan.
-6. Kembali ke Dashboard untuk melihat update analytics.
-7. Coba Prediksi Cepat tanpa menyimpan data.
-8. Coba Chatbot Edukasi.
-9. Buka Tentang Model untuk menjelaskan fitur, metrics, dan batasan.
+1. Buka landing page StuntGuard.
+2. Jalankan quick stunting check tanpa login.
+3. Tampilkan status prediksi, risk level, growth notes, rekomendasi, model mode, dan disclaimer.
+4. Jika hasil berisiko, buka chatbot edukasi gizi.
+5. Login sebagai parent.
+6. Simpan data anak dan tambah pemeriksaan tinggi/berat.
+7. Lihat grafik pertumbuhan tinggi dan berat.
+8. Ajukan consultation ticket.
+9. Login sebagai admin.
+10. Buka dashboard, high-risk cases, dan data pemeriksaan.
+11. Balas consultation ticket.
+12. Buka Tentang Model untuk menjelaskan mode model, dataset, metrics, dan batasan.
 
 ## Troubleshooting
 
-- Jika `/predict` mengembalikan confidence `null`, model belum dilatih atau gagal dimuat. Jalankan training model.
-- Jika frontend gagal terhubung backend, pastikan backend aktif di `http://localhost:8000` atau set `VITE_API_BASE_URL`.
-- Jika training gagal karena kolom tidak ditemukan, cek nama kolom CSV. Script mendukung `Age`, `Age (Month)`, `age_month`, `Gender`, `Height`, dan `Nutrition Status`.
-- Jika database kosong, jalankan `python -m app.seed` dari folder backend.
+- Jika `/predict` memakai `rule-based-fallback`, artefak model belum ada atau gagal dimuat.
+- Jika model notebook dipakai, pastikan `stunting_model.joblib` dan `scaler.joblib` berada di `backend/app/ml/model_artifacts/`.
+- Jika training dataset tidak punya weight, model akan dilabeli `height-only-fallback-model`.
+- Jika frontend gagal terhubung backend, cek `VITE_API_BASE_URL` dan pastikan backend berjalan di port `8000`.
+- Jika database lama tidak punya kolom baru, jalankan backend sekali; migrasi ringan akan menambah kolom `weight_kg` dan `model_mode`.
 
 ## Disclaimer
 

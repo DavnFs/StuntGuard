@@ -35,6 +35,7 @@ def create_child_measurement(
             age_month=payload.age_month,
             gender=child.gender,
             height_cm=payload.height_cm,
+            weight_kg=payload.weight_kg,
         )
     )
     return crud.create_measurement(db, child_id, payload, prediction)

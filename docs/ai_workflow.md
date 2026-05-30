@@ -1,41 +1,64 @@
 # AI Workflow
 
-## Dataset Description
+## Dataset
 
-Dataset utama yang digunakan adalah Kaggle `Stunting Toddler (Balita) Detection (121K rows)`. Fitur yang dipakai:
+Dataset utama adalah Kaggle Stunting Balita Detection 121K rows. Kolom yang umum tersedia:
 
-- Age atau Age (Month): usia balita dalam bulan, 0-60.
-- Gender: male/female.
-- Height: tinggi badan dalam sentimeter.
-- Nutrition Status: severely stunted, stunted, normal, tall.
+- Age / Age (Month)
+- Gender
+- Height
+- Nutrition Status
 
-File sample di repository hanya data kecil untuk demo lokal.
+Versi dataset lain atau dataset gabungan dapat memiliki `weight_kg`. StuntGuard mendeteksi keberadaan kolom berat badan saat training.
 
 ## Preprocessing
 
-Script `backend/app/ml/train_model.py` melakukan:
+Training script menormalisasi nama kolom fleksibel:
 
-- Load CSV dari `backend/data/`.
-- Normalisasi nama kolom fleksibel.
-- Konversi usia dan tinggi badan ke numerik.
-- Normalisasi gender ke `male` atau `female`.
-- Normalisasi label status gizi.
-- Drop data kosong atau tidak valid.
-- Validasi usia 0-60 bulan dan tinggi badan yang masuk akal.
+- `Age`, `Age (Month)`, `age_month`, `Umur (bulan)` menjadi `age_month`
+- `Gender`, `Jenis Kelamin` menjadi `gender`
+- `Height`, `Height (cm)`, `Tinggi Badan (cm)` menjadi `height_cm`
+- `Weight`, `Berat Badan (kg)` menjadi `weight_kg` jika tersedia
+- `Nutrition Status`, `Stunting` menjadi `nutrition_status`
+
+Data dibersihkan dari nilai kosong, umur di luar 0-60 bulan, tinggi tidak masuk akal, dan berat tidak masuk akal bila tersedia.
+
+## Feature Engineering
+
+Mode penuh memakai `GrowthFeatureEngineer` untuk menurunkan:
+
+- `age_month`
+- `height_cm`
+- `weight_kg`
+- `height_gap_expected`
+- `height_expected_ratio`
+- `weight_gap_expected`
+- `weight_expected_ratio`
+
+Fitur turunan ini dipakai sebagai fitur screening sederhana, bukan standar diagnosis resmi.
 
 ## Model Candidates
 
-Model yang dilatih:
+Training script membandingkan beberapa model scikit-learn:
 
 - DecisionTreeClassifier
 - RandomForestClassifier
+- ExtraTreesClassifier
+- HistGradientBoostingClassifier
 - LogisticRegression
+- MLPClassifier
 
-Setiap model dibungkus dalam pipeline scikit-learn dengan preprocessing gender menggunakan OneHotEncoder.
+Model terbaik dipilih berdasarkan macro F1.
 
-## Evaluation Metrics
+## Fallback Dataset Mode
 
-Metrics yang dihitung:
+Jika `weight_kg` tersedia, script melatih `full-growth-model`.
+
+Jika `weight_kg` tidak tersedia, script melatih `height-only-fallback-model` menggunakan usia, gender, dan tinggi badan. Metrics fallback ini harus dijelaskan sebagai fallback, bukan hasil model penuh.
+
+## Evaluation
+
+Metrics yang disimpan:
 
 - Accuracy
 - Macro precision
@@ -44,36 +67,20 @@ Metrics yang dihitung:
 - Confusion matrix
 - Classification report
 
-Macro F1 dipakai sebagai metric pemilihan utama karena semua kelas penting untuk dipantau, termasuk kelas risiko.
-
-## Model Selection
-
-Training script memilih model dengan macro F1 tertinggi pada test set. Hasil disimpan ke:
-
-- `backend/app/ml/model_artifacts/stunting_model.joblib`
-- `backend/app/ml/model_artifacts/metrics.json`
-- `backend/app/ml/model_artifacts/labels.json`
-
-Metrics tidak ditulis manual. Nilainya selalu dihasilkan dari dataset lokal saat script training dijalankan.
+Metrics tidak boleh dibuat manual. Nilainya berasal dari training lokal.
 
 ## Prediction Flow
 
-1. Frontend mengirim usia, gender, dan tinggi badan ke backend.
-2. Backend memvalidasi payload.
-3. Backend memuat model joblib jika tersedia.
-4. Model menghasilkan kategori status gizi.
-5. Backend memetakan status menjadi risk level.
-6. Backend menambahkan rekomendasi edukatif dan disclaimer.
-7. Response dikirim ke frontend.
-
-## Explainability
-
-Untuk Decision Tree atau Random Forest, script mengekstrak feature importance dari model terbaik dan menyimpannya di metrics. Endpoint `GET /model/info` menampilkan feature importance jika tersedia.
+1. Frontend mengirim umur, gender, tinggi, dan berat.
+2. Backend menghitung `growth_notes`.
+3. Backend memuat model joblib bila tersedia.
+4. Jika model tersedia, output status dan confidence.
+5. Jika model tidak tersedia/gagal, backend memakai `rule-based-fallback`.
+6. Backend mengembalikan rekomendasi aman, model mode, dan disclaimer.
 
 ## Limitations
 
-- Input model hanya usia, gender, dan tinggi badan.
-- Sistem belum menghitung z-score WHO secara resmi.
-- Data kesehatan lain belum dipakai.
-- Hasil prediksi tidak boleh menggantikan diagnosis tenaga kesehatan.
-- Dataset label dapat memiliki hubungan sangat kuat dengan aturan antropometri, sehingga model harus diposisikan sebagai demo AI screening.
+- Bukan diagnosis medis.
+- Dataset mungkin tidak berisi berat badan.
+- Estimasi expected growth di feature engineering adalah pendekatan demo.
+- Faktor klinis dan sosial belum dipakai.

@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Bot, Send, UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { ErrorBlock } from "../components/StateBlock";
 import { api } from "../services/api";
@@ -16,6 +17,7 @@ const suggestions = [
   "Kapan harus ke Puskesmas?",
   "Cara membaca hasil prediksi",
   "Apa bedanya stunted dan severely stunted?",
+  "Apa pentingnya berat badan dan tinggi badan?",
 ];
 
 export default function ChatbotPage() {
@@ -55,10 +57,15 @@ export default function ChatbotPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div>
         <p className="text-sm font-semibold text-brand-700">Edukasi Gizi</p>
         <h2 className="mt-1 text-2xl font-bold text-slate-950">Chatbot Informasi Stunting</h2>
+        </div>
+        <Link to="/" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          Kembali ke Landing
+        </Link>
       </div>
 
       {error ? <ErrorBlock message={error} /> : null}

@@ -2,46 +2,56 @@
 
 ## 1. Problem Introduction
 
-Jelaskan bahwa stunting membutuhkan pemantauan rutin dan tindak lanjut cepat. Posyandu membutuhkan alat bantu pencatatan dan skrining awal agar kasus berisiko lebih mudah terlihat.
+Jelaskan masalah stunting dan kebutuhan skrining awal yang mudah dipahami orang tua. Tekankan bahwa StuntGuard bukan diagnosis medis.
 
-## 2. Dashboard Overview
+## 2. Landing Page
 
-Buka halaman Dashboard. Tunjukkan kartu total balita, total pemeriksaan, status normal, stunted, severely stunted, dan persentase risiko stunting. Jelaskan chart distribusi status, status berdasarkan gender, tren bulanan, dan kasus risiko tinggi.
+Buka StuntGuard. Tunjukkan nama aplikasi, tagline, CTA `Cek Sekarang`, dan `Login / Daftar`.
 
-## 3. Add Child Data
+## 3. Quick Stunting Check
 
-Masuk ke halaman Data Balita. Tambahkan data demo balita tanpa NIK atau identitas sensitif. Isi nama demo, gender, tanggal lahir, orang tua, alamat demo, dan wilayah Posyandu.
+Masukkan umur, gender, tinggi badan, dan berat badan tanpa login. Jalankan prediksi.
 
-## 4. Add Measurement
+## 4. Prediction Result
 
-Buka detail balita. Isi tanggal pemeriksaan, usia dalam bulan, dan tinggi badan.
+Tunjukkan status gizi, risk level, confidence, growth notes tinggi/berat, model mode, rekomendasi, dan disclaimer.
 
-## 5. Run Prediction
+## 5. Chatbot
 
-Klik Simpan & Prediksi. Tunjukkan bahwa sistem otomatis memanggil model AI dan menyimpan hasil ke riwayat pemeriksaan.
+Jika hasil berisiko, klik `Tanya AI Gizi`. Tanyakan makanan pencegahan stunting atau kapan harus ke Puskesmas.
 
-## 6. Show Recommendation
+## 6. Login Parent
 
-Tunjukkan status gizi, risk level, confidence jika tersedia, rekomendasi edukatif, dan disclaimer bahwa hasil bukan diagnosis medis.
+Login dengan `parent@demo.com / password`.
 
-## 7. Show Growth Chart
+## 7. Save Child Data
 
-Tunjukkan grafik age_month vs height_cm di halaman detail. Jelaskan bahwa grafik membantu pemantauan pertumbuhan dari waktu ke waktu.
+Tambah data anak demo, lalu buka detail anak.
 
-## 8. Show Dashboard Update
+## 8. Add Measurement
 
-Kembali ke Dashboard. Tunjukkan bahwa total pemeriksaan dan chart berubah setelah data baru ditambahkan.
+Masukkan tanggal, usia, tinggi, dan berat. Tunjukkan hasil prediksi tersimpan.
 
-## 9. Show Chatbot
+## 9. Growth Chart
 
-Masuk ke Edukasi Gizi. Coba pertanyaan:
+Tampilkan grafik tinggi dan berat berdasarkan usia serta tabel riwayat pemeriksaan.
 
-- Apa itu stunting?
-- Makanan untuk mencegah stunting
-- Kapan harus ke Puskesmas?
+## 10. Consultation Ticket
 
-Jelaskan bahwa chatbot memiliki fallback rule-based sehingga tetap berjalan tanpa API key LLM.
+Buka halaman konsultasi dan kirim ticket ke petugas.
 
-## 10. Explain Model and Limitations
+## 11. Login Admin
 
-Buka Tentang Model. Tunjukkan model aktif, fitur input, label, metrics jika model sudah dilatih, dan feature importance jika tersedia. Tekankan bahwa sistem adalah skrining awal dan harus dikonsultasikan dengan tenaga kesehatan.
+Logout, login dengan `admin@demo.com / password`.
+
+## 12. Admin Dashboard
+
+Tunjukkan total anak, total pemeriksaan, distribusi status, high-risk cases, rata-rata tinggi/berat per kelompok usia.
+
+## 13. Reply Consultation
+
+Buka consultation ticket, balas dengan jawaban edukatif, lalu ubah status menjadi answered/closed.
+
+## 14. Model Info
+
+Tampilkan active model mode, fitur training, fitur turunan, dataset info, metrics jika tersedia, dan batasan sistem.
