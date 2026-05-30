@@ -109,7 +109,20 @@ export default function QuickPredictionPage() {
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-950">Hasil Prediksi</h3>
           {result ? (
-            <div className="mt-4"><PredictionResultCard result={result} /></div>
+            <div className="mt-4">
+              <PredictionResultCard
+                result={result}
+                childContext={{
+                  age_month: form.age_month,
+                  gender: form.gender,
+                  height_cm: form.height_cm,
+                  weight_kg: form.weight_kg,
+                  nutrition_status: result.nutrition_status,
+                  risk_level: result.risk_level,
+                  recommendation: result.summary.next_action,
+                }}
+              />
+            </div>
           ) : (
             <p className="mt-4 text-sm text-slate-500">
               Masukkan usia, gender, tinggi badan, dan berat badan untuk menjalankan skrining awal.

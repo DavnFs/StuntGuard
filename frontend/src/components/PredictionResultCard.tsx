@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import type { NutritionStatus, PredictionResponse } from "../types";
+import type { ChatChildContext, NutritionStatus, PredictionResponse } from "../types";
 
 const DISCLAIMER =
   "Hasil ini merupakan skrining awal dan bukan diagnosis medis. Silakan konsultasikan ke petugas kesehatan atau Puskesmas untuk pemeriksaan lanjutan.";
@@ -55,10 +55,11 @@ function numberOrDash(value: number | null | undefined, suffix = "") {
 
 interface PredictionResultCardProps {
   result: PredictionResponse;
+  childContext?: ChatChildContext;
   onCheckAgain?: () => void;
 }
 
-export default function PredictionResultCard({ result, onCheckAgain }: PredictionResultCardProps) {
+export default function PredictionResultCard({ result, childContext, onCheckAgain }: PredictionResultCardProps) {
   const tone = statusTone[result.nutrition_status];
   const risky = result.nutrition_status === "stunted" || result.nutrition_status === "severely stunted";
   const foodItems = result.nutrition_recommendation.food.slice(0, 5);
@@ -144,7 +145,7 @@ export default function PredictionResultCard({ result, onCheckAgain }: Predictio
       <div className="mt-5 flex flex-wrap gap-2">
         {risky ? (
           <>
-            <Link to="/chatbot" className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+            <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
               <MessageCircle className="h-4 w-4" />
               Tanya AI Gizi
             </Link>
@@ -159,7 +160,7 @@ export default function PredictionResultCard({ result, onCheckAgain }: Predictio
           </>
         ) : (
           <>
-            <Link to="/chatbot" className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+            <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
               <MessageCircle className="h-4 w-4" />
               Pelajari Edukasi Gizi
             </Link>

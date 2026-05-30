@@ -12,7 +12,7 @@ Hasil StuntGuard bukan diagnosis medis. Pemeriksaan dan keputusan resmi tetap ha
 - Login demo role-based: parent dan admin.
 - Parent flow: simpan data anak, tambah pemeriksaan, lihat grafik tinggi dan berat, ajukan consultation ticket.
 - Admin flow: dashboard monitoring, data balita, data pemeriksaan, high-risk cases, balas consultation ticket.
-- Chatbot edukasi gizi rule-based dengan optional OpenAI LLM jika `OPENAI_API_KEY` tersedia.
+- StuntGuard AI Assistant: chatbot edukasi gizi dengan guardrails kesehatan, optional OpenAI LLM, dan rule-based fallback jika API key tidak tersedia.
 - Training workflow scikit-learn dengan mode `full-growth-model` atau `height-only-fallback-model`.
 - SQLite database untuk data demo lokal.
 
@@ -83,6 +83,25 @@ Opsional buat `frontend/.env`:
 ```bash
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
+
+## Chatbot AI Guardrails
+
+`POST /chatbot` menjalankan StuntGuard AI Assistant untuk edukasi stunting dan gizi balita. Alurnya:
+
+1. Input guardrail memblokir topik di luar scope, permintaan diagnosis, dosis obat/suplemen, dan tanda bahaya.
+2. Jika aman dan `OPENAI_API_KEY` tersedia, backend memanggil LLM.
+3. Output guardrail mengecek jawaban LLM agar tidak berisi diagnosis atau instruksi pengobatan.
+4. Jika LLM tidak tersedia/gagal, sistem memakai rule-based fallback.
+
+Environment variables opsional:
+
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your_api_key
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Tanpa API key, chatbot tetap berjalan dengan fallback aman. Chatbot bukan dokter dan tidak menggantikan konsultasi ke Posyandu/Puskesmas.
 
 ## Dataset Setup
 
@@ -197,6 +216,7 @@ Auth ini hanya demo role switcher sederhana, bukan sistem keamanan produksi.
 - Jika training dataset tidak punya weight, model akan dilabeli `height-only-fallback-model`.
 - Jika frontend gagal terhubung backend, cek `VITE_API_BASE_URL` dan pastikan backend berjalan di port `8000`.
 - Jika database lama tidak punya kolom baru, jalankan backend sekali; migrasi ringan akan menambah kolom `weight_kg` dan `model_mode`.
+- Jika chatbot selalu menampilkan `source: rule-based`, artinya `OPENAI_API_KEY` belum diset atau panggilan LLM gagal. Ini tetap aman untuk demo.
 
 ## Disclaimer
 

@@ -379,7 +379,19 @@ export default function LandingPage() {
             <h2 className="mt-2 text-3xl font-bold text-slate-950">Ringkasan untuk orang tua</h2>
           </div>
           <div className="mt-5">
-            <PredictionResultCard result={result} onCheckAgain={checkAgain} />
+            <PredictionResultCard
+              result={result}
+              childContext={{
+                age_month: form.age_month,
+                gender: form.gender,
+                height_cm: form.height_cm,
+                weight_kg: form.weight_kg,
+                nutrition_status: result.nutrition_status,
+                risk_level: result.risk_level,
+                recommendation: result.summary.next_action,
+              }}
+              onCheckAgain={checkAgain}
+            />
           </div>
         </section>
       ) : null}

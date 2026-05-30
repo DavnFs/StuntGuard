@@ -31,3 +31,51 @@ def test_predict():
     assert "height_gap_expected" in payload["growth_notes"]
     assert "weight_gap_expected" in payload["growth_notes"]
     assert "Puskesmas" in payload["disclaimer"]
+
+
+def test_chatbot_blocks_out_of_scope():
+    response = client.post("/chatbot", json={"message": "Tolong buatkan kode game investasi"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "guardrail"
+    assert payload["safety_level"] == "blocked"
+    assert "stunting" in payload["reply"].lower()
+
+
+def test_chatbot_blocks_medication_dosage():
+    response = client.post("/chatbot", json={"message": "Berapa dosis vitamin supaya anak tidak stunting?"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "guardrail"
+    assert "tidak dapat memberikan dosis" in payload["reply"].lower()
+
+
+def test_chatbot_emergency_guidance():
+    response = client.post("/chatbot", json={"message": "Anak saya sesak dan muntah terus"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "guardrail"
+    assert payload["safety_level"] == "urgent"
+    assert "segera bawa" in payload["reply"].lower()
+
+
+def test_chatbot_rule_based_fallback_with_context():
+    response = client.post(
+        "/chatbot",
+        json={
+            "message": "Anak saya hasilnya stunted, makanan apa yang cocok?",
+            "child_context": {
+                "age_month": 24,
+                "gender": "male",
+                "height_cm": 82.5,
+                "weight_kg": 10.4,
+                "nutrition_status": "stunted",
+                "risk_level": "medium",
+            },
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] in {"rule-based", "llm"}
+    assert payload["safety_level"] == "safe"
+    assert payload["suggested_actions"]

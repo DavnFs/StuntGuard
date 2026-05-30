@@ -1,31 +1,46 @@
-import { FormEvent, useState } from "react";
-import { Bot, Send, UserRound } from "lucide-react";
-import { Link } from "react-router-dom";
+import { FormEvent, useMemo, useState } from "react";
+import { Bot, ShieldCheck, Send, UserRound } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 import { ErrorBlock } from "../components/StateBlock";
 import { api } from "../services/api";
+import type { ChatChildContext, ChatResponse } from "../types";
 
 interface Message {
   role: "user" | "assistant";
   text: string;
-  source?: "rule-based" | "llm";
+  source?: ChatResponse["source"];
+  safetyLevel?: string;
+  suggestedActions?: string[];
 }
 
 const suggestions = [
   "Apa itu stunting?",
-  "Makanan untuk mencegah stunting",
+  "Anak saya berisiko, harus apa?",
+  "Makanan apa yang baik untuk balita?",
   "Kapan harus ke Puskesmas?",
-  "Cara membaca hasil prediksi",
-  "Apa bedanya stunted dan severely stunted?",
-  "Apa pentingnya berat badan dan tinggi badan?",
 ];
 
+function contextLabel(context?: ChatChildContext | null) {
+  if (!context) return null;
+  const parts = [
+    context.age_month !== undefined && context.age_month !== null ? `${context.age_month} bulan` : null,
+    context.nutrition_status ? `hasil ${context.nutrition_status}` : null,
+    context.risk_level ? `risiko ${context.risk_level}` : null,
+  ].filter(Boolean);
+  return parts.length ? parts.join(" | ") : null;
+}
+
 export default function ChatbotPage() {
+  const location = useLocation();
+  const childContext = (location.state as { childContext?: ChatChildContext } | null)?.childContext ?? null;
+  const contextSummary = useMemo(() => contextLabel(childContext), [childContext]);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      text: "Halo, saya dapat membantu edukasi umum tentang stunting dan cara membaca hasil skrining. Untuk diagnosis, tetap konsultasikan ke tenaga kesehatan.",
+      text: "Halo, saya Asisten StuntGuard. Saya bisa membantu menjelaskan stunting, hasil skrining, dan edukasi gizi balita.",
       source: "rule-based",
+      safetyLevel: "safe",
     },
   ]);
   const [input, setInput] = useState("");
@@ -39,10 +54,16 @@ export default function ChatbotPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.chatbot(message);
+      const response = await api.chatbot(message, childContext);
       setMessages((items) => [
         ...items,
-        { role: "assistant", text: response.reply, source: response.source },
+        {
+          role: "assistant",
+          text: response.reply,
+          source: response.source,
+          safetyLevel: response.safety_level,
+          suggestedActions: response.suggested_actions,
+        },
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Chatbot gagal menjawab");
@@ -60,13 +81,22 @@ export default function ChatbotPage() {
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-        <p className="text-sm font-semibold text-brand-700">Edukasi Gizi</p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-950">Chatbot Informasi Stunting</h2>
+          <p className="text-sm font-semibold text-brand-700">StuntGuard AI Assistant</p>
+          <h2 className="mt-1 text-2xl font-bold text-slate-950">Asisten Edukasi Gizi Balita</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Tanyakan seputar stunting, hasil skrining, makanan bergizi, dan kapan perlu ke Posyandu atau Puskesmas.
+          </p>
         </div>
         <Link to="/" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
           Kembali ke Landing
         </Link>
       </div>
+
+      {contextSummary ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          Konteks skrining aktif: {contextSummary}. Asisten akan memakai konteks ini untuk memberi edukasi umum, bukan diagnosis.
+        </div>
+      ) : null}
 
       {error ? <ErrorBlock message={error} /> : null}
 
@@ -91,8 +121,20 @@ export default function ChatbotPage() {
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{message.text}</p>
+                  {message.suggestedActions?.length ? (
+                    <div className="mt-3 rounded-lg bg-white/70 p-3 text-xs leading-5 text-slate-600">
+                      <p className="font-semibold text-slate-800">Langkah yang bisa dilakukan:</p>
+                      <ul className="mt-1 list-disc pl-4">
+                        {message.suggestedActions.map((action) => (
+                          <li key={action}>{action}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                   {message.source ? (
-                    <p className="mt-2 text-xs opacity-70">Sumber: {message.source}</p>
+                    <p className="mt-2 text-xs opacity-70">
+                      Sumber: {message.source} | Safety: {message.safetyLevel ?? "-"}
+                    </p>
                   ) : null}
                 </div>
                 {message.role === "user" ? (
@@ -103,7 +145,7 @@ export default function ChatbotPage() {
               </div>
             ))}
             {loading ? (
-              <div className="text-sm text-slate-500">Menyiapkan jawaban...</div>
+              <div className="text-sm text-slate-500">Menyiapkan jawaban aman...</div>
             ) : null}
           </div>
         </div>
@@ -137,8 +179,9 @@ export default function ChatbotPage() {
               Kirim
             </button>
           </form>
-          <p className="mt-3 text-xs text-slate-500">
-            Informasi bersifat edukasi umum dan bukan pengganti konsultasi tenaga kesehatan.
+          <p className="mt-3 inline-flex items-start gap-2 text-xs leading-5 text-slate-500">
+            <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-brand-700" />
+            Asisten ini memberikan edukasi umum dan bukan pengganti konsultasi tenaga kesehatan.
           </p>
         </div>
       </section>

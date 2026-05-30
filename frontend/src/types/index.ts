@@ -125,7 +125,19 @@ export interface DashboardSummary {
 
 export interface ChatResponse {
   reply: string;
-  source: "rule-based" | "llm";
+  source: "rule-based" | "llm" | "guardrail" | string;
+  safety_level: string;
+  suggested_actions: string[];
+}
+
+export interface ChatChildContext {
+  age_month?: number | null;
+  gender?: Gender | string | null;
+  height_cm?: number | null;
+  weight_kg?: number | null;
+  nutrition_status?: NutritionStatus | string | null;
+  risk_level?: RiskLevel | string | null;
+  recommendation?: string | null;
 }
 
 export interface ModelInfo {

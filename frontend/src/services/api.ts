@@ -1,6 +1,7 @@
 import type {
   AuthUser,
   ChatResponse,
+  ChatChildContext,
   Child,
   ChildInput,
   Consultation,
@@ -72,10 +73,10 @@ export const api = {
     apiRequest<void>(`/measurements/${id}`, { method: "DELETE" }),
   predict: (payload: PredictionRequest) =>
     apiRequest<PredictionResponse>("/predict", { method: "POST", body: JSON.stringify(payload) }),
-  chatbot: (message: string) =>
+  chatbot: (message: string, childContext?: ChatChildContext | null) =>
     apiRequest<ChatResponse>("/chatbot", {
       method: "POST",
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, child_context: childContext ?? null }),
     }),
   getModelInfo: () => apiRequest<ModelInfo>("/model/info"),
   getConsultations: (params?: { status?: ConsultationStatus; childId?: number }) => {

@@ -142,13 +142,26 @@ class DashboardSummary(BaseModel):
     high_risk_children_count: int
 
 
+class ChatChildContext(BaseModel):
+    age_month: Optional[int] = Field(default=None, ge=0, le=60)
+    gender: Optional[str] = None
+    height_cm: Optional[float] = Field(default=None, gt=20, lt=150)
+    weight_kg: Optional[float] = Field(default=None, gt=1, lt=60)
+    nutrition_status: Optional[str] = None
+    risk_level: Optional[str] = None
+    recommendation: Optional[str] = None
+
+
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
+    child_context: Optional[ChatChildContext] = None
 
 
 class ChatResponse(BaseModel):
     reply: str
-    source: Literal["rule-based", "llm"]
+    source: str
+    safety_level: str
+    suggested_actions: List[str] = []
 
 
 class ModelInfoResponse(BaseModel):

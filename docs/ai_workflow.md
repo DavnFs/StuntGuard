@@ -78,9 +78,36 @@ Metrics tidak boleh dibuat manual. Nilainya berasal dari training lokal.
 5. Jika model tidak tersedia/gagal, backend memakai `rule-based-fallback`.
 6. Backend mengembalikan rekomendasi aman, model mode, dan disclaimer.
 
+## Chatbot AI Workflow
+
+StuntGuard AI Assistant adalah chatbot edukasi gizi berbahasa Indonesia. Chatbot memakai LLM jika environment `OPENAI_API_KEY` tersedia, tetapi tetap bisa berjalan tanpa API key menggunakan rule-based fallback.
+
+Alur chatbot:
+
+1. User mengirim pertanyaan dan opsional `child_context` dari hasil skrining.
+2. Input guardrail mengklasifikasikan pesan:
+   - out-of-scope
+   - medical diagnosis request
+   - medication or dosage request
+   - emergency or danger sign
+   - nutrition/stunting/app help question
+3. Jika pesan berisiko, backend langsung menjawab dengan guardrail response.
+4. Jika aman dan LLM tersedia, backend mengirim system prompt yang membatasi peran chatbot sebagai edukator gizi Posyandu.
+5. Output guardrail memeriksa jawaban LLM dari pola tidak aman seperti diagnosis pasti, dosis obat, atau klaim penyembuhan.
+6. Jika jawaban LLM tidak aman atau LLM gagal, backend memakai fallback rule-based.
+
+Guardrail penting:
+
+- Chatbot tidak memberi diagnosis medis.
+- Chatbot tidak memberi dosis obat, vitamin, antibiotik, atau suplemen.
+- Tanda bahaya seperti sesak, kejang, lemas sekali, tidak sadar, muntah terus, diare berat, atau tidak mau minum diarahkan segera ke fasilitas kesehatan.
+- Untuk bayi di bawah 6 bulan, chatbot tidak menyarankan makanan padat dan menjelaskan ASI eksklusif kecuali ada arahan tenaga kesehatan.
+- Jawaban selalu menekankan bahwa informasi bersifat edukasi dan bukan pengganti konsultasi tenaga kesehatan.
+
 ## Limitations
 
 - Bukan diagnosis medis.
 - Dataset mungkin tidak berisi berat badan.
 - Estimasi expected growth di feature engineering adalah pendekatan demo.
 - Faktor klinis dan sosial belum dipakai.
+- Chatbot bergantung pada guardrails dan fallback; hasilnya tetap edukasi umum, bukan rekomendasi medis personal.
