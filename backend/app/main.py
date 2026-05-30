@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
+from app import config as _config  # noqa: F401 - loads .env before app setup
 from app.database import Base, engine
 from app.routers import auth, chatbot, children, consultations, dashboard, measurements, prediction
 

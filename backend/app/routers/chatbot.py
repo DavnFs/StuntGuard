@@ -1,7 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.orm import Session
 
 from app import schemas
+from app.database import get_db
 from app.ml.predict import DISCLAIMER
+from app.services.chat_usage import check_chat_rate_limit, record_chat_usage, resolve_chat_identity
 from app.services.chatbot_guardrails import (
     EDUCATION_NOTE,
     build_system_prompt,
@@ -9,7 +12,7 @@ from app.services.chatbot_guardrails import (
     input_guardrail_reply,
     output_guardrail,
 )
-from app.services.llm_client import call_llm
+from app.services.llm_client import call_llm, configured_provider
 
 
 router = APIRouter(tags=["chatbot"])
@@ -87,10 +90,13 @@ def rule_based_reply(message: str, child_context: schemas.ChatChildContext | Non
 
 
 @router.post("/chatbot", response_model=schemas.ChatResponse)
-def chatbot(payload: schemas.ChatRequest):
+def chatbot(payload: schemas.ChatRequest, request: Request, db: Session = Depends(get_db)):
+    identity = resolve_chat_identity(request)
+    provider = configured_provider()
     classification = classify_message(payload.message)
     blocked = input_guardrail_reply(classification)
     if blocked:
+        record_chat_usage(db, identity, len(payload.message), provider, "guardrail")
         return schemas.ChatResponse(
             reply=blocked["reply"],
             source="guardrail",
@@ -98,18 +104,30 @@ def chatbot(payload: schemas.ChatRequest):
             suggested_actions=blocked["suggested_actions"],
         )
 
+    allowed, limit_message = check_chat_rate_limit(db, identity)
+    if not allowed:
+        return schemas.ChatResponse(
+            reply=limit_message or "Batas penggunaan chatbot sudah tercapai.",
+            source="rate-limit",
+            safety_level="limited",
+            suggested_actions=["Gunakan fitur konsultasi ke petugas bila membutuhkan bantuan lanjutan"],
+        )
+
     system_prompt = build_system_prompt(payload.child_context)
     llm_text = call_llm(payload.message, system_prompt)
     if llm_text:
         guarded = output_guardrail(llm_text)
+        source = "llm" if guarded["safe"] else "guardrail"
+        record_chat_usage(db, identity, len(payload.message), provider, source)
         return schemas.ChatResponse(
             reply=guarded["reply"],
-            source="llm" if guarded["safe"] else "guardrail",
+            source=source,
             safety_level=guarded["safety_level"],
             suggested_actions=["Konsultasikan ke Posyandu/Puskesmas bila hasil skrining berisiko"],
         )
 
     fallback, actions = rule_based_reply(payload.message, payload.child_context)
+    record_chat_usage(db, identity, len(payload.message), provider, "rule-based")
     return schemas.ChatResponse(
         reply=fallback,
         source="rule-based",

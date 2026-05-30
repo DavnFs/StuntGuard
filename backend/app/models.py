@@ -59,3 +59,16 @@ class ConsultationTicket(Base):
 
     child = relationship("Child")
     latest_measurement = relationship("Measurement")
+
+
+class ChatUsage(Base):
+    __tablename__ = "chat_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(160), nullable=True, index=True)
+    ip_address = Column(String(64), nullable=False, index=True)
+    role = Column(String(20), nullable=False, default="guest", index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    message_length = Column(Integer, nullable=False)
+    provider = Column(String(40), nullable=False)
+    source = Column(String(40), nullable=False)

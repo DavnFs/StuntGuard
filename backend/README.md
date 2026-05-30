@@ -52,6 +52,18 @@ python -m app.seed
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+## Chatbot LLM
+
+Backend membaca environment dari process env, root `.env`, atau `backend/.env`. Gemini menjadi provider utama:
+
+```bash
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash-lite
+```
+
+Provider opsional: `groq`, `openai`, dan `openrouter`. Lihat root `.env.example`. Jika API key kosong atau provider gagal, `/chatbot` tetap memakai rule-based fallback aman. Usage limit disimpan di tabel `chat_usage`.
+
 Endpoint penting:
 
 - `GET /health`

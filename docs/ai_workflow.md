@@ -80,7 +80,7 @@ Metrics tidak boleh dibuat manual. Nilainya berasal dari training lokal.
 
 ## Chatbot AI Workflow
 
-StuntGuard AI Assistant adalah chatbot edukasi gizi berbahasa Indonesia. Chatbot memakai LLM jika environment `OPENAI_API_KEY` tersedia, tetapi tetap bisa berjalan tanpa API key menggunakan rule-based fallback.
+StuntGuard AI Assistant adalah chatbot edukasi gizi berbahasa Indonesia. Gemini menjadi provider utama karena cocok untuk demo akademik dan memiliki free tier. Provider lain seperti Groq, OpenAI, dan OpenRouter tetap dapat dipakai melalui environment variables. Jika API key tidak tersedia atau provider gagal, chatbot tetap berjalan menggunakan rule-based fallback.
 
 Alur chatbot:
 
@@ -92,9 +92,28 @@ Alur chatbot:
    - emergency or danger sign
    - nutrition/stunting/app help question
 3. Jika pesan berisiko, backend langsung menjawab dengan guardrail response.
-4. Jika aman dan LLM tersedia, backend mengirim system prompt yang membatasi peran chatbot sebagai edukator gizi Posyandu.
-5. Output guardrail memeriksa jawaban LLM dari pola tidak aman seperti diagnosis pasti, dosis obat, atau klaim penyembuhan.
-6. Jika jawaban LLM tidak aman atau LLM gagal, backend memakai fallback rule-based.
+4. Jika pesan aman, backend mengecek usage limit.
+5. Jika limit masih tersedia dan API key provider ada, backend mengirim system prompt yang membatasi peran chatbot sebagai edukator gizi Posyandu.
+6. Output guardrail memeriksa jawaban LLM dari pola tidak aman seperti diagnosis pasti, dosis obat, atau klaim penyembuhan.
+7. Jika jawaban LLM tidak aman atau LLM gagal, backend memakai fallback rule-based.
+
+Provider environment:
+
+- `LLM_PROVIDER=gemini | groq | openai | openrouter`
+- `GEMINI_API_KEY`, `GEMINI_MODEL`
+- `GROQ_API_KEY`, `GROQ_MODEL`
+- `OPENAI_API_KEY`, `OPENAI_MODEL`
+- `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`
+
+Usage limit:
+
+- Guest: 10 pesan per hari per IP dan 3 pesan per menit per IP.
+- Parent: 30 pesan per hari per user dan 5 pesan per menit per user.
+- Admin: 100 pesan per hari per user.
+- Panjang pesan maksimal 500 karakter.
+- Output LLM dibatasi sekitar 300 token agar jawaban tetap ringkas.
+
+Tabel `chat_usage` menyimpan `user_id`, `ip_address`, `role`, waktu pesan, panjang pesan, provider, dan source respons. Data ini dipakai untuk rate limiting lokal demo.
 
 Guardrail penting:
 

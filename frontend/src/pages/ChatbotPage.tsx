@@ -167,6 +167,7 @@ export default function ChatbotPage() {
             <input
               value={input}
               onChange={(event) => setInput(event.target.value)}
+              maxLength={500}
               placeholder="Tulis pertanyaan edukasi..."
               className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600"
             />
@@ -181,7 +182,7 @@ export default function ChatbotPage() {
           </form>
           <p className="mt-3 inline-flex items-start gap-2 text-xs leading-5 text-slate-500">
             <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-brand-700" />
-            Asisten ini memberikan edukasi umum dan bukan pengganti konsultasi tenaga kesehatan.
+            Asisten ini memberikan edukasi umum dan bukan pengganti konsultasi tenaga kesehatan. Maksimal 500 karakter per pesan.
           </p>
         </div>
       </section>

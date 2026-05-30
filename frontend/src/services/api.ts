@@ -15,6 +15,7 @@ import type {
   PredictionRequest,
   PredictionResponse,
 } from "../types";
+import { getCurrentUser } from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
@@ -22,6 +23,12 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
   const headers = new Headers(options.headers);
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    headers.set("Authorization", `Bearer ${currentUser.token}`);
+    headers.set("X-StuntGuard-User-Id", currentUser.email);
+    headers.set("X-StuntGuard-Role", currentUser.role);
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {

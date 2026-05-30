@@ -202,7 +202,7 @@ def build_system_prompt(context: Optional[schemas.ChatChildContext] = None) -> s
         "You are not a doctor and you must not provide medical diagnosis.\n"
         "Always answer in simple Bahasa Indonesia.\n"
         "Use a calm, supportive, non-alarming tone.\n"
-        "Keep answers practical and concise.\n"
+        "Keep answers practical, concise, and usually under 4 short paragraphs.\n"
         "You may suggest general local foods such as eggs, fish, chicken, tofu, tempeh, beans, vegetables, fruit, rice, porridge, and other balanced meals when age-appropriate.\n"
         "For children under 6 months, do not recommend solid foods; recommend exclusive breastfeeding unless advised otherwise by health professionals.\n"
         "For risky screening results, recommend consulting Posyandu or Puskesmas.\n"

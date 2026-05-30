@@ -153,7 +153,7 @@ class ChatChildContext(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=1000)
+    message: str = Field(..., min_length=1, max_length=500)
     child_context: Optional[ChatChildContext] = None
 
 

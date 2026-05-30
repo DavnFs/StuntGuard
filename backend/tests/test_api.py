@@ -1,9 +1,20 @@
 from fastapi.testclient import TestClient
+from uuid import uuid4
 
 from app.main import app
 
 
 client = TestClient(app)
+
+
+def chat_headers():
+    return {"X-Forwarded-For": f"test-{uuid4()}", "X-StuntGuard-Role": "guest"}
+
+
+def disable_llm(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    for key in ("GEMINI_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"):
+        monkeypatch.delenv(key, raising=False)
 
 
 def test_health():
@@ -33,8 +44,13 @@ def test_predict():
     assert "Puskesmas" in payload["disclaimer"]
 
 
-def test_chatbot_blocks_out_of_scope():
-    response = client.post("/chatbot", json={"message": "Tolong buatkan kode game investasi"})
+def test_chatbot_blocks_out_of_scope(monkeypatch):
+    disable_llm(monkeypatch)
+    response = client.post(
+        "/chatbot",
+        json={"message": "Tolong buatkan kode game investasi"},
+        headers=chat_headers(),
+    )
     assert response.status_code == 200
     payload = response.json()
     assert payload["source"] == "guardrail"
@@ -42,16 +58,26 @@ def test_chatbot_blocks_out_of_scope():
     assert "stunting" in payload["reply"].lower()
 
 
-def test_chatbot_blocks_medication_dosage():
-    response = client.post("/chatbot", json={"message": "Berapa dosis vitamin supaya anak tidak stunting?"})
+def test_chatbot_blocks_medication_dosage(monkeypatch):
+    disable_llm(monkeypatch)
+    response = client.post(
+        "/chatbot",
+        json={"message": "Berapa dosis vitamin supaya anak tidak stunting?"},
+        headers=chat_headers(),
+    )
     assert response.status_code == 200
     payload = response.json()
     assert payload["source"] == "guardrail"
     assert "tidak dapat memberikan dosis" in payload["reply"].lower()
 
 
-def test_chatbot_emergency_guidance():
-    response = client.post("/chatbot", json={"message": "Anak saya sesak dan muntah terus"})
+def test_chatbot_emergency_guidance(monkeypatch):
+    disable_llm(monkeypatch)
+    response = client.post(
+        "/chatbot",
+        json={"message": "Anak saya sesak dan muntah terus"},
+        headers=chat_headers(),
+    )
     assert response.status_code == 200
     payload = response.json()
     assert payload["source"] == "guardrail"
@@ -59,7 +85,8 @@ def test_chatbot_emergency_guidance():
     assert "segera bawa" in payload["reply"].lower()
 
 
-def test_chatbot_rule_based_fallback_with_context():
+def test_chatbot_rule_based_fallback_with_context(monkeypatch):
+    disable_llm(monkeypatch)
     response = client.post(
         "/chatbot",
         json={
@@ -73,9 +100,25 @@ def test_chatbot_rule_based_fallback_with_context():
                 "risk_level": "medium",
             },
         },
+        headers=chat_headers(),
     )
     assert response.status_code == 200
     payload = response.json()
     assert payload["source"] in {"rule-based", "llm"}
     assert payload["safety_level"] == "safe"
     assert payload["suggested_actions"]
+
+
+def test_chatbot_guest_minute_rate_limit(monkeypatch):
+    disable_llm(monkeypatch)
+    headers = {"X-Forwarded-For": f"limit-{uuid4()}"}
+    for _ in range(3):
+        response = client.post("/chatbot", json={"message": "Apa itu stunting?"}, headers=headers)
+        assert response.status_code == 200
+        assert response.json()["source"] == "rule-based"
+
+    response = client.post("/chatbot", json={"message": "Apa itu stunting?"}, headers=headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "rate-limit"
+    assert payload["safety_level"] == "limited"
