@@ -36,6 +36,32 @@ export interface PredictionResponse {
   nutrition_status: NutritionStatus;
   risk_level: RiskLevel;
   confidence: number | null;
+  summary: {
+    title: string;
+    description: string;
+    next_action: string;
+  };
+  comparison: {
+    tb_normal: number | null;
+    bb_normal: number | null;
+    persentase_tb: number | null;
+    persentase_bb: number | null;
+    tb_explanation: string;
+    bb_explanation: string;
+    overall_explanation: string;
+    warning: string | null;
+  };
+  nutrition_recommendation: {
+    description: string;
+    mpasi_phase: string;
+    food: string[];
+    frequency: string;
+    supplements: string;
+    notes: string;
+    calories_target: string;
+    protein_target: string;
+    fluid_target: string;
+  };
   recommendation: string;
   growth_notes: {
     height_gap_expected: number | null;
@@ -43,6 +69,7 @@ export interface PredictionResponse {
     weight_gap_expected: number | null;
     weight_expected_ratio: number | null;
   };
+  technical_details: Record<string, unknown>;
   model_mode: ModelMode;
   disclaimer: string;
 }

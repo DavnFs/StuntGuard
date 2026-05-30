@@ -14,6 +14,7 @@ MODEL_PATH = ARTIFACT_DIR / "stunting_model.joblib"
 SCALER_PATH = ARTIFACT_DIR / "scaler.joblib"
 METRICS_PATH = ARTIFACT_DIR / "metrics.json"
 LABELS_PATH = ARTIFACT_DIR / "labels.json"
+NORMAL_VALUES_PATH = ARTIFACT_DIR / "normal_values.csv"
 
 DISCLAIMER = (
     "Hasil ini merupakan skrining awal dan bukan diagnosis medis. "
@@ -46,6 +47,24 @@ TEXT_LABELS = {
     "tall": "tall",
 }
 
+NORMAL_COLUMN_ALIASES = {
+    "age": "age_month",
+    "age (month)": "age_month",
+    "age_month": "age_month",
+    "umur": "age_month",
+    "umur (bulan)": "age_month",
+    "gender": "gender",
+    "jenis kelamin": "gender",
+    "height": "height_cm",
+    "height (cm)": "height_cm",
+    "height_cm": "height_cm",
+    "tinggi badan (cm)": "height_cm",
+    "weight": "weight_kg",
+    "weight (kg)": "weight_kg",
+    "weight_kg": "weight_kg",
+    "berat badan (kg)": "weight_kg",
+}
+
 
 def risk_level_for_status(status: str) -> str:
     mapping = {
@@ -55,6 +74,37 @@ def risk_level_for_status(status: str) -> str:
         "tall": "monitor",
     }
     return mapping.get(status, "monitor")
+
+
+def summary_for_status(status: str) -> Dict[str, str]:
+    summaries = {
+        "severely stunted": {
+            "title": "Segera Konsultasikan ke Petugas Kesehatan",
+            "description": (
+                "Hasil skrining menunjukkan risiko tinggi. Ini bukan diagnosis medis, "
+                "tetapi perlu pemeriksaan lanjutan."
+            ),
+            "next_action": "Segera konsultasikan ke Posyandu atau Puskesmas.",
+        },
+        "stunted": {
+            "title": "Anak Perlu Pemantauan Lebih Lanjut",
+            "description": "Tinggi badan anak terlihat lebih rendah dibandingkan rata-rata anak seusianya.",
+            "next_action": "Lakukan pemantauan rutin dan konsultasikan ke petugas kesehatan.",
+        },
+        "normal": {
+            "title": "Pertumbuhan Anak Terlihat Normal",
+            "description": (
+                "Berdasarkan data yang dimasukkan, pertumbuhan anak masih berada pada kategori aman."
+            ),
+            "next_action": "Pertahankan gizi seimbang dan lanjutkan pemantauan bulanan.",
+        },
+        "tall": {
+            "title": "Pertumbuhan Anak Di Atas Rata-Rata",
+            "description": "Tinggi badan anak terlihat lebih tinggi dibandingkan rata-rata anak seusianya.",
+            "next_action": "Tetap pantau pertumbuhan agar tetap proporsional.",
+        },
+    }
+    return summaries.get(status, summaries["normal"])
 
 
 def compute_growth_notes(payload: PredictionRequest) -> Dict[str, float]:
@@ -74,39 +124,263 @@ def compute_growth_notes(payload: PredictionRequest) -> Dict[str, float]:
     }
 
 
-def recommendation_for_status(status: str, growth_notes: Optional[Dict[str, float]] = None) -> str:
-    recommendations = {
-        "severely stunted": (
-            "Risiko tinggi. Jadwalkan tindak lanjut segera dengan kader, bidan, atau Puskesmas. "
-            "Lakukan pemantauan pertumbuhan bulanan dan edukasi gizi keluarga sesuai arahan tenaga kesehatan. "
-            "Informasi ini bukan diagnosis medis."
+def _gender_code(gender: Any) -> Optional[int]:
+    if isinstance(gender, str):
+        value = gender.strip().lower()
+        if value in {"male", "laki-laki", "laki laki", "m", "0"}:
+            return 0
+        if value in {"female", "perempuan", "f", "1"}:
+            return 1
+    try:
+        number = int(float(gender))
+    except (TypeError, ValueError):
+        return None
+    return number if number in {0, 1} else None
+
+
+def _normalize_normal_values(raw: pd.DataFrame) -> pd.DataFrame:
+    rename_map = {}
+    for column in raw.columns:
+        key = str(column).strip().lower()
+        if key in NORMAL_COLUMN_ALIASES:
+            rename_map[column] = NORMAL_COLUMN_ALIASES[key]
+
+    data = raw.rename(columns=rename_map)
+    required = {"age_month", "gender", "height_cm", "weight_kg"}
+    if not required.issubset(set(data.columns)):
+        return pd.DataFrame(columns=["age_month", "gender_code", "height_cm", "weight_kg"])
+
+    normalized = data[["age_month", "gender", "height_cm", "weight_kg"]].copy()
+    normalized["age_month"] = pd.to_numeric(normalized["age_month"], errors="coerce")
+    normalized["gender_code"] = normalized["gender"].map(_gender_code)
+    normalized["height_cm"] = pd.to_numeric(normalized["height_cm"], errors="coerce")
+    normalized["weight_kg"] = pd.to_numeric(normalized["weight_kg"], errors="coerce")
+    normalized = normalized.dropna(subset=["age_month", "gender_code", "height_cm", "weight_kg"])
+    normalized["age_month"] = normalized["age_month"].astype(float)
+    normalized["gender_code"] = normalized["gender_code"].astype(int)
+    normalized["height_cm"] = normalized["height_cm"].astype(float)
+    normalized["weight_kg"] = normalized["weight_kg"].astype(float)
+    return normalized[["age_month", "gender_code", "height_cm", "weight_kg"]]
+
+
+def _load_normal_values() -> Optional[pd.DataFrame]:
+    if not NORMAL_VALUES_PATH.exists():
+        return None
+    try:
+        data = _normalize_normal_values(pd.read_csv(NORMAL_VALUES_PATH))
+    except Exception:
+        return None
+    return data if not data.empty else None
+
+
+def get_normal_values(age: int, gender: str, normal_values_df: Optional[pd.DataFrame]) -> tuple[Optional[float], Optional[float]]:
+    if normal_values_df is None or normal_values_df.empty:
+        return None, None
+
+    gender_code = _gender_code(gender)
+    if gender_code is None:
+        return None, None
+
+    same_gender = normal_values_df[normal_values_df["gender_code"] == gender_code].copy()
+    if same_gender.empty:
+        return None, None
+
+    same_gender["age_distance"] = (same_gender["age_month"] - float(age)).abs()
+    row = same_gender.sort_values(["age_distance", "age_month"]).iloc[0]
+    return round(float(row["height_cm"]), 2), round(float(row["weight_kg"]), 2)
+
+
+def _percentage(value: float, normal_value: Optional[float]) -> Optional[float]:
+    if normal_value is None or normal_value <= 0:
+        return None
+    return round(float((value / normal_value) * 100), 2)
+
+
+def _height_explanation(percent: Optional[float]) -> str:
+    if percent is None:
+        return "Data rata-rata tinggi badan belum tersedia untuk pembanding."
+    if percent < 90:
+        return "Tinggi badan anak lebih rendah dibandingkan rata-rata anak seusianya."
+    if percent < 97:
+        return "Tinggi badan anak sedikit lebih rendah dibandingkan rata-rata anak seusianya."
+    if percent <= 105:
+        return "Tinggi badan anak masih mendekati rata-rata anak seusianya."
+    return "Tinggi badan anak terlihat lebih tinggi dibandingkan rata-rata anak seusianya."
+
+
+def _weight_explanation(percent: Optional[float]) -> str:
+    if percent is None:
+        return "Data rata-rata berat badan belum tersedia untuk pembanding."
+    if percent < 85:
+        return "Berat badan anak juga terlihat lebih rendah dibandingkan rata-rata anak seusianya."
+    if percent < 95:
+        return "Berat badan anak sedikit lebih rendah dibandingkan rata-rata."
+    if percent <= 110:
+        return "Berat badan anak masih mendekati rata-rata."
+    return "Berat badan anak terlihat lebih tinggi dibandingkan rata-rata."
+
+
+def build_growth_comparison(
+    age: int,
+    gender: str,
+    height: float,
+    weight: float,
+    tb_normal: Optional[float],
+    bb_normal: Optional[float],
+) -> Dict[str, Any]:
+    persentase_tb = _percentage(height, tb_normal)
+    persentase_bb = _percentage(weight, bb_normal)
+    tb_explanation = _height_explanation(persentase_tb)
+    bb_explanation = _weight_explanation(persentase_bb)
+
+    if tb_normal is None or bb_normal is None:
+        overall = (
+            "Data rata-rata pembanding belum tersedia. Hasil skrining tetap dapat digunakan sebagai "
+            "informasi awal, tetapi pemantauan langsung di Posyandu/Puskesmas tetap disarankan."
+        )
+    elif persentase_tb is not None and persentase_tb < 90:
+        overall = "Pemantauan tinggi badan secara berkala disarankan dan hasil sebaiknya dikonsultasikan."
+    elif persentase_bb is not None and persentase_bb < 85:
+        overall = "Pemantauan berat dan asupan gizi perlu diperhatikan bersama petugas kesehatan."
+    else:
+        overall = "Pertumbuhan tetap perlu dipantau secara rutin setiap bulan."
+
+    warning = None
+    if persentase_tb is not None and persentase_bb is not None and abs(persentase_tb - persentase_bb) >= 25:
+        warning = (
+            "Perbandingan tinggi dan berat tampak kurang proporsional. "
+            "Ulangi pengukuran dan konsultasikan ke petugas kesehatan bila ragu."
+        )
+
+    return {
+        "tb_normal": tb_normal,
+        "bb_normal": bb_normal,
+        "persentase_tb": persentase_tb,
+        "persentase_bb": persentase_bb,
+        "tb_explanation": tb_explanation,
+        "bb_explanation": bb_explanation,
+        "overall_explanation": overall,
+        "warning": warning,
+    }
+
+
+def _add_status_warning(status: str, comparison: Dict[str, Any]) -> Dict[str, Any]:
+    percent_height = comparison.get("persentase_tb")
+    if status in {"stunted", "severely stunted"} and isinstance(percent_height, (int, float)) and percent_height >= 97:
+        comparison = {**comparison}
+        comparison["warning"] = (
+            "Hasil model dan pembanding rata-rata terlihat berbeda. "
+            "Ulangi pengukuran tinggi/berat dan konsultasikan ke petugas kesehatan."
+        )
+    return comparison
+
+
+def _mpasi_phase(age: int) -> str:
+    if age < 6:
+        return "ASI eksklusif sesuai anjuran tenaga kesehatan."
+    if age <= 8:
+        return "MPASI awal dengan tekstur lumat/saring sesuai kesiapan anak."
+    if age <= 11:
+        return "MPASI tekstur cincang halus atau makanan lunak."
+    if age <= 23:
+        return "Makanan keluarga yang disesuaikan tekstur dan porsinya."
+    return "Makanan keluarga bergizi seimbang."
+
+
+def _food_list(age: int, status: str) -> list[str]:
+    if age < 6:
+        return [
+            "ASI eksklusif bila memungkinkan",
+            "Konsultasi ke bidan/dokter bila ada masalah menyusu atau berat badan",
+        ]
+
+    foods = [
+        "Protein hewani seperti telur, ikan, ayam, daging, atau hati ayam sesuai usia",
+        "Protein nabati seperti tempe, tahu, dan kacang-kacangan yang aman untuk anak",
+        "Karbohidrat seperti nasi, kentang, jagung, ubi, atau bubur sesuai usia",
+        "Sayur dan buah untuk variasi vitamin dan mineral",
+        "Lemak sehat dari santan, minyak, alpukat, atau sumber lain sesuai kebiasaan keluarga",
+    ]
+    if status in {"stunted", "severely stunted"}:
+        foods.insert(0, "Utamakan makanan padat gizi dan sumber protein pada setiap makan utama")
+    return foods
+
+
+def _meal_frequency(age: int) -> str:
+    if age < 6:
+        return "ASI sesuai kebutuhan bayi. Jangan memberikan MPASI sebelum waktunya tanpa arahan tenaga kesehatan."
+    if age <= 8:
+        return "MPASI 2-3 kali sehari, dapat ditambah 1-2 selingan sesuai kemampuan anak, sambil melanjutkan ASI."
+    if age <= 11:
+        return "MPASI 3-4 kali sehari dengan 1-2 selingan bergizi, sambil melanjutkan ASI."
+    if age <= 23:
+        return "Makan utama 3-4 kali sehari dengan 1-2 selingan bergizi."
+    return "Makan utama 3 kali sehari dengan 1-2 selingan bergizi dan minum cukup."
+
+
+def get_nutrition_recommendation(
+    stunting_status: str,
+    age: int,
+    weight: float,
+    gender: str,
+    height: float,
+    tb_normal: Optional[float],
+    bb_normal: Optional[float],
+) -> Dict[str, Any]:
+    if stunting_status == "severely stunted":
+        description = (
+            "Risiko tinggi terdeteksi. Segera konsultasikan ke Posyandu atau Puskesmas. "
+            "Pemenuhan gizi perlu dipantau bersama petugas kesehatan."
+        )
+        notes = "Jangan menunda pemeriksaan lanjutan. Catat pola makan, tinggi, dan berat anak sebelum konsultasi."
+    elif stunting_status == "stunted":
+        description = (
+            "Anak perlu pemantauan lebih lanjut. Perbaiki kualitas makanan harian dan konsultasikan "
+            "bila tinggi/berat tidak membaik."
+        )
+        notes = "Pantau pertumbuhan setiap bulan dan prioritaskan makanan padat gizi sesuai usia."
+    elif stunting_status == "tall":
+        description = "Pertumbuhan tinggi berada di atas rata-rata. Tetap jaga asupan seimbang dan pantau proporsi tinggi/berat."
+        notes = "Konsultasikan bila pola pertumbuhan tampak sangat berbeda dari bulan sebelumnya."
+    else:
+        description = "Pertumbuhan tampak dalam kategori aman. Pertahankan pola makan bergizi seimbang dan pemantauan rutin."
+        notes = "Lanjutkan kebiasaan makan sehat, kebersihan, imunisasi, dan kunjungan Posyandu."
+
+    if bb_normal is not None and weight < (bb_normal * 0.85):
+        notes += " Berat badan tampak lebih rendah dari rata-rata, sehingga asupan energi dan protein perlu diperhatikan."
+    if tb_normal is not None and height < (tb_normal * 0.9):
+        notes += " Tinggi badan tampak lebih rendah dari rata-rata, sehingga pemantauan tinggi berkala disarankan."
+
+    return {
+        "description": description,
+        "mpasi_phase": _mpasi_phase(age),
+        "food": _food_list(age, stunting_status),
+        "frequency": _meal_frequency(age),
+        "supplements": (
+            "Konsultasikan penggunaan suplemen dengan dokter, bidan, ahli gizi, atau petugas Puskesmas."
         ),
-        "stunted": (
-            "Risiko sedang. Lanjutkan monitoring rutin, dorong edukasi makanan bergizi seimbang dan kaya protein, "
-            "serta konsultasikan ke petugas kesehatan bila pertumbuhan tidak membaik."
+        "notes": notes,
+        "calories_target": (
+            "Kebutuhan energi berbeda menurut usia, aktivitas, dan kondisi anak. Mintalah target personal ke ahli gizi atau Puskesmas."
         ),
-        "normal": (
-            "Status terpantau normal. Pertahankan asupan gizi seimbang, imunisasi dan kebersihan, "
-            "serta lanjutkan pemantauan bulanan di Posyandu."
+        "protein_target": (
+            "Utamakan sumber protein dalam menu harian sesuai usia anak. Target personal sebaiknya ditentukan petugas kesehatan."
         ),
-        "tall": (
-            "Tinggi badan berada di kategori tall. Tetap lakukan pemantauan berkala dan konsultasikan "
-            "ke petugas kesehatan bila pola pertumbuhan tampak tidak biasa."
+        "fluid_target": (
+            "Cukupi cairan sesuai usia dan kondisi anak. Untuk bayi, ikuti anjuran ASI dari tenaga kesehatan."
         ),
     }
-    recommendation = recommendations.get(status, "Lanjutkan pemantauan rutin dan konsultasikan hasil ke tenaga kesehatan.")
-    if growth_notes:
-        if growth_notes["weight_gap_expected"] <= -1.5:
-            recommendation += (
-                " Berat badan juga terlihat lebih rendah dari estimasi pertumbuhan umum. "
-                "Pemantauan lanjutan disarankan."
-            )
-        elif growth_notes["height_gap_expected"] <= -4 and growth_notes["weight_gap_expected"] > -1.5:
-            recommendation += (
-                " Tinggi badan terlihat lebih rendah dibanding estimasi umum, meskipun berat badan tidak terlalu rendah. "
-                "Perlu pemantauan tinggi badan berkala."
-            )
-    return recommendation
+
+
+def _legacy_recommendation(summary: Dict[str, str], nutrition: Dict[str, Any], comparison: Dict[str, Any]) -> str:
+    parts = [
+        summary["next_action"],
+        nutrition["description"],
+        comparison["overall_explanation"],
+    ]
+    if comparison.get("warning"):
+        parts.append(str(comparison["warning"]))
+    return " ".join(parts)
 
 
 def _load_json(path: Path) -> Optional[Dict[str, Any]]:
@@ -213,6 +487,62 @@ def _fallback_status(age_month: int, gender: str, height_cm: float, weight_kg: f
     return "normal"
 
 
+def _build_prediction_response(
+    payload: PredictionRequest,
+    status: str,
+    confidence: Optional[float],
+    model_mode: str,
+    growth_notes: Dict[str, float],
+    fallback_note: Optional[str] = None,
+) -> PredictionResponse:
+    normal_values = _load_normal_values()
+    tb_normal, bb_normal = get_normal_values(payload.age_month, payload.gender, normal_values)
+    comparison = build_growth_comparison(
+        payload.age_month,
+        payload.gender,
+        payload.height_cm,
+        payload.weight_kg,
+        tb_normal,
+        bb_normal,
+    )
+    comparison = _add_status_warning(status, comparison)
+    summary = summary_for_status(status)
+    nutrition = get_nutrition_recommendation(
+        status,
+        payload.age_month,
+        payload.weight_kg,
+        payload.gender,
+        payload.height_cm,
+        tb_normal,
+        bb_normal,
+    )
+    recommendation = _legacy_recommendation(summary, nutrition, comparison)
+    if fallback_note:
+        recommendation = f"{recommendation} Catatan sistem: {fallback_note}"
+
+    technical_details = {
+        **growth_notes,
+        "confidence_percentage": round(float(confidence * 100), 2) if confidence is not None else None,
+        "model_mode": model_mode,
+        "normal_values_available": normal_values is not None,
+        "normal_values_file": str(NORMAL_VALUES_PATH) if NORMAL_VALUES_PATH.exists() else None,
+    }
+
+    return PredictionResponse(
+        nutrition_status=status,
+        risk_level=risk_level_for_status(status),
+        confidence=confidence,
+        summary=summary,
+        comparison=comparison,
+        nutrition_recommendation=nutrition,
+        recommendation=recommendation,
+        growth_notes=growth_notes,
+        technical_details=technical_details,
+        model_mode=model_mode,
+        disclaimer=DISCLAIMER,
+    )
+
+
 def predict_nutrition(payload: PredictionRequest) -> PredictionResponse:
     growth_notes = compute_growth_notes(payload)
     record = {
@@ -228,15 +558,7 @@ def predict_nutrition(payload: PredictionRequest) -> PredictionResponse:
             metrics = _load_json(METRICS_PATH)
             model_mode = _model_mode_from_metrics(metrics, model)
             status, confidence = _predict_with_artifact(model, payload, record, model_mode)
-            return PredictionResponse(
-                nutrition_status=status,
-                risk_level=risk_level_for_status(status),
-                confidence=confidence,
-                recommendation=recommendation_for_status(status, growth_notes),
-                growth_notes=growth_notes,
-                model_mode=model_mode,
-                disclaimer=DISCLAIMER,
-            )
+            return _build_prediction_response(payload, status, confidence, model_mode, growth_notes)
         except Exception as exc:
             status = _fallback_status(
                 payload.age_month,
@@ -244,31 +566,23 @@ def predict_nutrition(payload: PredictionRequest) -> PredictionResponse:
                 payload.height_cm,
                 payload.weight_kg,
             )
-            return PredictionResponse(
-                nutrition_status=status,
-                risk_level=risk_level_for_status(status),
-                confidence=None,
-                recommendation=(
-                    recommendation_for_status(status, growth_notes)
-                    + f" Catatan sistem: model scikit-learn belum dapat digunakan ({exc}); hasil memakai fallback demo."
-                ),
-                growth_notes=growth_notes,
-                model_mode="rule-based-fallback",
-                disclaimer=DISCLAIMER,
+            return _build_prediction_response(
+                payload,
+                status,
+                None,
+                "rule-based-fallback",
+                growth_notes,
+                f"model scikit-learn belum dapat digunakan ({exc}); hasil memakai fallback demo.",
             )
 
     status = _fallback_status(payload.age_month, payload.gender, payload.height_cm, payload.weight_kg)
-    return PredictionResponse(
-        nutrition_status=status,
-        risk_level=risk_level_for_status(status),
-        confidence=None,
-        recommendation=(
-            recommendation_for_status(status, growth_notes)
-            + " Catatan sistem: belum ada artefak model terlatih, sehingga hasil memakai fallback demo."
-        ),
-        growth_notes=growth_notes,
-        model_mode="rule-based-fallback",
-        disclaimer=DISCLAIMER,
+    return _build_prediction_response(
+        payload,
+        status,
+        None,
+        "rule-based-fallback",
+        growth_notes,
+        "belum ada artefak model terlatih, sehingga hasil memakai fallback demo.",
     )
 
 

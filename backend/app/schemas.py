@@ -48,12 +48,45 @@ class PredictionRequest(BaseModel):
     weight_kg: float = Field(..., gt=1, lt=60)
 
 
+class PredictionSummary(BaseModel):
+    title: str
+    description: str
+    next_action: str
+
+
+class GrowthComparison(BaseModel):
+    tb_normal: Optional[float]
+    bb_normal: Optional[float]
+    persentase_tb: Optional[float]
+    persentase_bb: Optional[float]
+    tb_explanation: str
+    bb_explanation: str
+    overall_explanation: str
+    warning: Optional[str]
+
+
+class NutritionRecommendation(BaseModel):
+    description: str
+    mpasi_phase: str
+    food: List[str]
+    frequency: str
+    supplements: str
+    notes: str
+    calories_target: str
+    protein_target: str
+    fluid_target: str
+
+
 class PredictionResponse(BaseModel):
     nutrition_status: NutritionStatus
     risk_level: RiskLevel
     confidence: Optional[float]
+    summary: PredictionSummary
+    comparison: GrowthComparison
+    nutrition_recommendation: NutritionRecommendation
     recommendation: str
     growth_notes: Dict[str, Optional[float]]
+    technical_details: Dict[str, Any]
     model_mode: ModelMode
     disclaimer: str
 
