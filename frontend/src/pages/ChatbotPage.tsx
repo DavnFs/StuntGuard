@@ -17,6 +17,7 @@ interface Message {
 const suggestions = [
   "Apa itu stunting?",
   "Anak saya berisiko, harus apa?",
+  "Apa efeknya jika dibiarkan?",
   "Makanan apa yang baik untuk balita?",
   "Kapan harus ke Puskesmas?",
 ];
@@ -33,7 +34,16 @@ function contextLabel(context?: ChatChildContext | null) {
 
 export default function ChatbotPage() {
   const location = useLocation();
-  const childContext = (location.state as { childContext?: ChatChildContext } | null)?.childContext ?? null;
+  const routedContext = (location.state as { childContext?: ChatChildContext } | null)?.childContext ?? null;
+  const storedContext = useMemo(() => {
+    try {
+      const raw = window.sessionStorage.getItem("stuntguard_last_child_context");
+      return raw ? (JSON.parse(raw) as ChatChildContext) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  const childContext = routedContext ?? storedContext;
   const contextSummary = useMemo(() => contextLabel(childContext), [childContext]);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -131,10 +141,13 @@ export default function ChatbotPage() {
                       </ul>
                     </div>
                   ) : null}
-                  {message.source ? (
-                    <p className="mt-2 text-xs opacity-70">
-                      Sumber: {message.source} | Safety: {message.safetyLevel ?? "-"}
-                    </p>
+                  {message.source && message.role === "assistant" ? (
+                    <details className="mt-3 text-xs opacity-70">
+                      <summary className="cursor-pointer font-semibold">Detail sistem</summary>
+                      <p className="mt-1">
+                        Source: {message.source} | Safety: {message.safetyLevel ?? "-"}
+                      </p>
+                    </details>
                   ) : null}
                 </div>
                 {message.role === "user" ? (

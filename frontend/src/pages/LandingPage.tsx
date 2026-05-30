@@ -23,7 +23,7 @@ import { Link } from "react-router-dom";
 import PredictionResultCard from "../components/PredictionResultCard";
 import { ErrorBlock } from "../components/StateBlock";
 import { api } from "../services/api";
-import type { Gender, PredictionRequest, PredictionResponse } from "../types";
+import type { ChatChildContext, Gender, PredictionRequest, PredictionResponse } from "../types";
 
 const DISCLAIMER =
   "Hasil ini merupakan skrining awal dan bukan diagnosis medis. Silakan konsultasikan ke petugas kesehatan atau Puskesmas untuk pemeriksaan lanjutan.";
@@ -67,6 +67,30 @@ export default function LandingPage() {
     setForm((current) => ({ ...current, ...updates }));
   };
 
+  const buildChatContext = (prediction: PredictionResponse): ChatChildContext => ({
+    age_month: form.age_month,
+    gender: form.gender,
+    height_cm: form.height_cm,
+    weight_kg: form.weight_kg,
+    nutrition_status: prediction.nutrition_status,
+    risk_level: prediction.risk_level,
+    recommendation: prediction.summary.next_action,
+    comparison: {
+      tb_explanation: prediction.comparison.tb_explanation,
+      bb_explanation: prediction.comparison.bb_explanation,
+      overall_explanation: prediction.comparison.overall_explanation,
+      warning: prediction.comparison.warning,
+    },
+    nutrition_recommendation: {
+      description: prediction.nutrition_recommendation.description,
+      mpasi_phase: prediction.nutrition_recommendation.mpasi_phase,
+      food: prediction.nutrition_recommendation.food,
+      frequency: prediction.nutrition_recommendation.frequency,
+      supplements: prediction.nutrition_recommendation.supplements,
+      notes: prediction.nutrition_recommendation.notes,
+    },
+  });
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -74,6 +98,7 @@ export default function LandingPage() {
     try {
       const prediction = await api.predict(form);
       setResult(prediction);
+      window.sessionStorage.setItem("stuntguard_last_child_context", JSON.stringify(buildChatContext(prediction)));
       window.setTimeout(() => {
         document.getElementById("hasil")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 80);
@@ -381,15 +406,7 @@ export default function LandingPage() {
           <div className="mt-5">
             <PredictionResultCard
               result={result}
-              childContext={{
-                age_month: form.age_month,
-                gender: form.gender,
-                height_cm: form.height_cm,
-                weight_kg: form.weight_kg,
-                nutrition_status: result.nutrition_status,
-                risk_level: result.risk_level,
-                recommendation: result.summary.next_action,
-              }}
+              childContext={buildChatContext(result)}
               onCheckAgain={checkAgain}
             />
           </div>

@@ -4,7 +4,7 @@ import { ClipboardPlus, Gauge } from "lucide-react";
 import PredictionResultCard from "../components/PredictionResultCard";
 import { ErrorBlock } from "../components/StateBlock";
 import { api } from "../services/api";
-import type { Gender, PredictionRequest, PredictionResponse } from "../types";
+import type { ChatChildContext, Gender, PredictionRequest, PredictionResponse } from "../types";
 
 export default function QuickPredictionPage() {
   const [form, setForm] = useState<PredictionRequest>({
@@ -17,12 +17,38 @@ export default function QuickPredictionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const buildChatContext = (prediction: PredictionResponse): ChatChildContext => ({
+    age_month: form.age_month,
+    gender: form.gender,
+    height_cm: form.height_cm,
+    weight_kg: form.weight_kg,
+    nutrition_status: prediction.nutrition_status,
+    risk_level: prediction.risk_level,
+    recommendation: prediction.summary.next_action,
+    comparison: {
+      tb_explanation: prediction.comparison.tb_explanation,
+      bb_explanation: prediction.comparison.bb_explanation,
+      overall_explanation: prediction.comparison.overall_explanation,
+      warning: prediction.comparison.warning,
+    },
+    nutrition_recommendation: {
+      description: prediction.nutrition_recommendation.description,
+      mpasi_phase: prediction.nutrition_recommendation.mpasi_phase,
+      food: prediction.nutrition_recommendation.food,
+      frequency: prediction.nutrition_recommendation.frequency,
+      supplements: prediction.nutrition_recommendation.supplements,
+      notes: prediction.nutrition_recommendation.notes,
+    },
+  });
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      setResult(await api.predict(form));
+      const prediction = await api.predict(form);
+      setResult(prediction);
+      window.sessionStorage.setItem("stuntguard_last_child_context", JSON.stringify(buildChatContext(prediction)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Prediksi gagal");
     } finally {
@@ -112,15 +138,7 @@ export default function QuickPredictionPage() {
             <div className="mt-4">
               <PredictionResultCard
                 result={result}
-                childContext={{
-                  age_month: form.age_month,
-                  gender: form.gender,
-                  height_cm: form.height_cm,
-                  weight_kg: form.weight_kg,
-                  nutrition_status: result.nutrition_status,
-                  risk_level: result.risk_level,
-                  recommendation: result.summary.next_action,
-                }}
+                childContext={buildChatContext(result)}
               />
             </div>
           ) : (

@@ -80,10 +80,10 @@ export const api = {
     apiRequest<void>(`/measurements/${id}`, { method: "DELETE" }),
   predict: (payload: PredictionRequest) =>
     apiRequest<PredictionResponse>("/predict", { method: "POST", body: JSON.stringify(payload) }),
-  chatbot: (message: string, childContext?: ChatChildContext | null) =>
+  chatbot: (message: string, childContext?: ChatChildContext | null, childId?: number | null) =>
     apiRequest<ChatResponse>("/chatbot", {
       method: "POST",
-      body: JSON.stringify({ message, child_context: childContext ?? null }),
+      body: JSON.stringify({ message, child_context: childContext ?? null, child_id: childId ?? null }),
     }),
   getModelInfo: () => apiRequest<ModelInfo>("/model/info"),
   getConsultations: (params?: { status?: ConsultationStatus; childId?: number }) => {

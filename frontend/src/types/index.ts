@@ -138,6 +138,20 @@ export interface ChatChildContext {
   nutrition_status?: NutritionStatus | string | null;
   risk_level?: RiskLevel | string | null;
   recommendation?: string | null;
+  comparison?: {
+    tb_explanation?: string | null;
+    bb_explanation?: string | null;
+    overall_explanation?: string | null;
+    warning?: string | null;
+  } | null;
+  nutrition_recommendation?: {
+    description?: string | null;
+    mpasi_phase?: string | null;
+    food?: string[];
+    frequency?: string | null;
+    supplements?: string | null;
+    notes?: string | null;
+  } | null;
 }
 
 export interface ModelInfo {

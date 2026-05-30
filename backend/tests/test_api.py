@@ -2,6 +2,8 @@ from fastapi.testclient import TestClient
 from uuid import uuid4
 
 from app.main import app
+from app import schemas
+from app.services.chatbot_guardrails import classify_message
 
 
 client = TestClient(app)
@@ -107,6 +109,41 @@ def test_chatbot_rule_based_fallback_with_context(monkeypatch):
     assert payload["source"] in {"rule-based", "llm"}
     assert payload["safety_level"] == "safe"
     assert payload["suggested_actions"]
+
+
+def test_chatbot_allows_long_term_followup_with_context(monkeypatch):
+    disable_llm(monkeypatch)
+    context = {
+        "age_month": 24,
+        "gender": "male",
+        "height_cm": 76.0,
+        "weight_kg": 9.0,
+        "nutrition_status": "severely stunted",
+        "risk_level": "high",
+    }
+    classification = classify_message(
+        "apabila dibiarkan hingga dewasa efeknya apa saja",
+        schemas.ChatChildContext(**context),
+    )
+    assert classification["intent"] == "long_term_effects"
+    assert classification["blocked"] is False
+    assert classification["out_of_scope"] is False
+
+    response = client.post(
+        "/chatbot",
+        json={"message": "apabila dibiarkan hingga dewasa efeknya apa saja", "child_context": context},
+        headers=chat_headers(),
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] in {"rule-based", "llm"}
+    assert "jangka panjang" in payload["reply"].lower()
+    assert "posyandu" in payload["reply"].lower() or "puskesmas" in payload["reply"].lower()
+    assert payload["suggested_actions"] == [
+        "Konsultasikan hasil skrining ke Posyandu/Puskesmas",
+        "Pantau tinggi dan berat badan setiap bulan",
+        "Perhatikan asupan protein dan gizi seimbang sesuai usia",
+    ]
 
 
 def test_chatbot_guest_minute_rate_limit(monkeypatch):

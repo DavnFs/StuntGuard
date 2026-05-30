@@ -142,6 +142,22 @@ class DashboardSummary(BaseModel):
     high_risk_children_count: int
 
 
+class ChatGrowthComparison(BaseModel):
+    tb_explanation: Optional[str] = None
+    bb_explanation: Optional[str] = None
+    overall_explanation: Optional[str] = None
+    warning: Optional[str] = None
+
+
+class ChatNutritionRecommendation(BaseModel):
+    description: Optional[str] = None
+    mpasi_phase: Optional[str] = None
+    food: List[str] = []
+    frequency: Optional[str] = None
+    supplements: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class ChatChildContext(BaseModel):
     age_month: Optional[int] = Field(default=None, ge=0, le=60)
     gender: Optional[str] = None
@@ -150,11 +166,14 @@ class ChatChildContext(BaseModel):
     nutrition_status: Optional[str] = None
     risk_level: Optional[str] = None
     recommendation: Optional[str] = None
+    comparison: Optional[ChatGrowthComparison] = None
+    nutrition_recommendation: Optional[ChatNutritionRecommendation] = None
 
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=500)
     child_context: Optional[ChatChildContext] = None
+    child_id: Optional[int] = None
 
 
 class ChatResponse(BaseModel):
