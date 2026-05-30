@@ -54,15 +54,16 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ## Chatbot LLM
 
-Backend membaca environment dari process env, root `.env`, atau `backend/.env`. Gemini menjadi provider utama:
+Backend membaca environment dari process env, root `.env`, atau `backend/.env`. Gunakan `chain` untuk mencoba Gemini lalu provider fallback lain secara otomatis:
 
 ```bash
-LLM_PROVIDER=gemini
+LLM_PROVIDER=chain
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.0-flash-lite
+LLM_FALLBACK_CHAIN=gemini:gemini-2.5-flash-lite,gemini:gemini-2.0-flash-lite,gemini:gemini-1.5-flash,groq:llama-3.1-8b-instant,openrouter:google/gemini-2.0-flash-lite-001
 ```
 
-Provider opsional: `groq`, `openai`, dan `openrouter`. Lihat root `.env.example`. Jika API key kosong atau provider gagal, `/chatbot` tetap memakai rule-based fallback aman. Usage limit disimpan di tabel `chat_usage`.
+Provider opsional: `groq`, `openai`, dan `openrouter`. Lihat root `.env.example`. Jika API key kosong atau provider gagal, `/chatbot` tetap memakai rule-based fallback aman. Usage limit disimpan di tabel `chat_usage` dan dapat diatur lewat env `CHAT_*`.
 
 Endpoint penting:
 

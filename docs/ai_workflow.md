@@ -80,7 +80,7 @@ Metrics tidak boleh dibuat manual. Nilainya berasal dari training lokal.
 
 ## Chatbot AI Workflow
 
-StuntGuard AI Assistant adalah chatbot edukasi gizi berbahasa Indonesia. Gemini menjadi provider utama karena cocok untuk demo akademik dan memiliki free tier. Provider lain seperti Groq, OpenAI, dan OpenRouter tetap dapat dipakai melalui environment variables. Jika API key tidak tersedia atau provider gagal, chatbot tetap berjalan menggunakan rule-based fallback.
+StuntGuard AI Assistant adalah chatbot edukasi gizi berbahasa Indonesia. Mode default yang disarankan adalah `LLM_PROVIDER=chain`, yaitu mencoba Gemini terlebih dahulu lalu provider fallback lain seperti Groq, OpenRouter, atau OpenAI bila tersedia. Jika API key tidak tersedia atau semua provider gagal, chatbot tetap berjalan menggunakan rule-based fallback.
 
 Alur chatbot:
 
@@ -99,19 +99,22 @@ Alur chatbot:
 
 Provider environment:
 
-- `LLM_PROVIDER=gemini | groq | openai | openrouter`
+- `LLM_PROVIDER=chain | gemini | groq | openai | openrouter`
 - `GEMINI_API_KEY`, `GEMINI_MODEL`
 - `GROQ_API_KEY`, `GROQ_MODEL`
 - `OPENAI_API_KEY`, `OPENAI_MODEL`
 - `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`
+- `LLM_FALLBACK_CHAIN` untuk mengatur urutan provider/model fallback
+- `LLM_MAX_OUTPUT_TOKENS` untuk membatasi panjang jawaban
 
 Usage limit:
 
-- Guest: 10 pesan per hari per IP dan 3 pesan per menit per IP.
-- Parent: 30 pesan per hari per user dan 5 pesan per menit per user.
-- Admin: 100 pesan per hari per user.
+- Guest default: 10 pesan per hari per IP dan 3 pesan per menit per IP.
+- Parent default: 30 pesan per hari per user dan 5 pesan per menit per user.
+- Admin default: 100 pesan per hari per user dan 30 pesan per menit per user.
 - Panjang pesan maksimal 500 karakter.
 - Output LLM dibatasi sekitar 300 token agar jawaban tetap ringkas.
+- Limit lokal dapat diatur melalui `CHAT_GUEST_DAILY_LIMIT`, `CHAT_PARENT_DAILY_LIMIT`, `CHAT_ADMIN_DAILY_LIMIT`, variasi `*_MINUTE_LIMIT`, `CHAT_RATE_LIMIT_ENABLED`, dan `CHAT_LIMIT_COUNT_SOURCES`.
 
 Tabel `chat_usage` menyimpan `user_id`, `ip_address`, `role`, waktu pesan, panjang pesan, provider, dan source respons. Data ini dipakai untuk rate limiting lokal demo.
 

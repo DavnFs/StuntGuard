@@ -102,15 +102,28 @@ Usage limit:
 - Panjang pesan maksimal 500 karakter.
 - Output AI dibatasi sekitar 300 token.
 
-Gemini direkomendasikan untuk demo kampus:
+Untuk demo kampus, gunakan mode `chain` agar backend mencoba beberapa model/provider secara berurutan. Gemini tetap menjadi prioritas pertama:
 
 ```bash
-LLM_PROVIDER=gemini
+LLM_PROVIDER=chain
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.0-flash-lite
+GEMINI_FALLBACK_MODEL=gemini-1.5-flash
+LLM_MAX_OUTPUT_TOKENS=250
+LLM_FALLBACK_CHAIN=gemini:gemini-2.5-flash-lite,gemini:gemini-2.0-flash-lite,gemini:gemini-1.5-flash,groq:llama-3.1-8b-instant,openrouter:google/gemini-2.0-flash-lite-001
 ```
 
-Provider opsional juga tersedia melalui `GROQ_API_KEY`, `OPENAI_API_KEY`, atau `OPENROUTER_API_KEY`. Lihat `.env.example` untuk daftar lengkap. Tanpa API key, chatbot tetap berjalan dengan fallback aman. Chatbot bukan dokter dan tidak menggantikan konsultasi ke Posyandu/Puskesmas.
+Provider opsional juga tersedia melalui `GROQ_API_KEY`, `OPENAI_API_KEY`, atau `OPENROUTER_API_KEY`. Provider yang tidak punya API key akan dilewati otomatis. Lihat `.env.example` untuk daftar lengkap. Tanpa API key, chatbot tetap berjalan dengan fallback aman. Chatbot bukan dokter dan tidak menggantikan konsultasi ke Posyandu/Puskesmas.
+
+Untuk testing, local quota bisa dilonggarkan lewat `.env`:
+
+```bash
+CHAT_GUEST_DAILY_LIMIT=100
+CHAT_GUEST_MINUTE_LIMIT=10
+CHAT_LIMIT_COUNT_SOURCES=all
+```
+
+Jika sedang testing berat, local limiter bisa dimatikan sementara dengan `CHAT_RATE_LIMIT_ENABLED=false`.
 
 ## Dataset Setup
 

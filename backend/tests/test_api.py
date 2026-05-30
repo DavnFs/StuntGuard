@@ -15,6 +15,10 @@ def chat_headers():
 
 def disable_llm(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("CHAT_RATE_LIMIT_ENABLED", "true")
+    monkeypatch.setenv("CHAT_GUEST_DAILY_LIMIT", "10")
+    monkeypatch.setenv("CHAT_GUEST_MINUTE_LIMIT", "3")
+    monkeypatch.setenv("CHAT_LIMIT_COUNT_SOURCES", "all")
     for key in ("GEMINI_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"):
         monkeypatch.delenv(key, raising=False)
 
