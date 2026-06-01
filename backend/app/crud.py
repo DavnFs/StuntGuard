@@ -1,7 +1,7 @@
 from typing import Optional
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app import models, schemas
 
@@ -104,7 +104,7 @@ def list_consultations(
     status: Optional[str] = None,
     child_id: Optional[int] = None,
 ) -> list[models.ConsultationTicket]:
-    query = db.query(models.ConsultationTicket)
+    query = db.query(models.ConsultationTicket).options(joinedload(models.ConsultationTicket.child))
     if status:
         query = query.filter(models.ConsultationTicket.status == status)
     if child_id:

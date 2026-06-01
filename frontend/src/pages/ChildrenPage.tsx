@@ -1,8 +1,8 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Edit2, Plus, Search, Trash2, UserRound } from "lucide-react";
 
-import { ErrorBlock, LoadingBlock } from "../components/StateBlock";
+import { ErrorBlock, LoadingBlock, SuccessBlock } from "../components/StateBlock";
 import { api } from "../services/api";
 import type { Child, ChildInput, Gender } from "../types";
 
@@ -19,6 +19,7 @@ const genderLabel: Record<Gender, string> = {
   male: "Laki-laki",
   female: "Perempuan",
 };
+const today = new Date().toISOString().slice(0, 10);
 
 export default function ChildrenPage() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -28,11 +29,11 @@ export default function ChildrenPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const filteredChildren = useMemo(() => children, [children]);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const loadChildren = () => {
     setLoading(true);
+    setError(null);
     api
       .getChildren(search)
       .then(setChildren)
@@ -48,6 +49,7 @@ export default function ChildrenPage() {
     event.preventDefault();
     setSaving(true);
     setError(null);
+    setSuccess(null);
     try {
       if (editing) {
         await api.updateChild(editing.id, form);
@@ -57,6 +59,7 @@ export default function ChildrenPage() {
       setForm(emptyForm);
       setEditing(null);
       await api.getChildren(search).then(setChildren);
+      setSuccess(editing ? "Perubahan data balita tersimpan." : "Data balita berhasil ditambahkan.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menyimpan data");
     } finally {
@@ -66,6 +69,7 @@ export default function ChildrenPage() {
 
   const startEdit = (child: Child) => {
     setEditing(child);
+    setSuccess(null);
     setForm({
       name: child.name,
       gender: child.gender,
@@ -78,8 +82,15 @@ export default function ChildrenPage() {
 
   const remove = async (child: Child) => {
     if (!window.confirm(`Hapus data ${child.name}?`)) return;
-    await api.deleteChild(child.id);
-    setChildren((items) => items.filter((item) => item.id !== child.id));
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.deleteChild(child.id);
+      setChildren((items) => items.filter((item) => item.id !== child.id));
+      setSuccess(`Data ${child.name} berhasil dihapus.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus data balita");
+    }
   };
 
   return (
@@ -101,19 +112,22 @@ export default function ChildrenPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Cari nama atau wilayah"
+            aria-label="Cari nama atau wilayah"
+            maxLength={120}
             className="w-full border-0 bg-transparent text-sm outline-none"
           />
         </form>
       </div>
 
       {error ? <ErrorBlock message={error} /> : null}
+      {success ? <SuccessBlock message={success} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[1fr_380px]">
+        <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           {loading ? (
             <LoadingBlock />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="max-w-full overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead>
                   <tr className="text-left text-slate-500">
@@ -126,14 +140,14 @@ export default function ChildrenPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredChildren.length === 0 ? (
+                  {children.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-6 text-center text-slate-500">
-                        Belum ada data balita.
+                        Belum ada data balita yang cocok. Tambahkan data baru atau ubah kata pencarian.
                       </td>
                     </tr>
                   ) : (
-                    filteredChildren.map((child) => (
+                    children.map((child) => (
                       <tr key={child.id}>
                         <td className="py-3 pr-4">
                           <Link to={`/app/children/${child.id}`} className="font-semibold text-brand-700 hover:text-brand-800">
@@ -150,6 +164,7 @@ export default function ChildrenPage() {
                               type="button"
                               onClick={() => startEdit(child)}
                               className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"
+                              aria-label={`Edit data ${child.name}`}
                               title="Edit data"
                             >
                               <Edit2 className="h-4 w-4" />
@@ -158,6 +173,7 @@ export default function ChildrenPage() {
                               type="button"
                               onClick={() => remove(child)}
                               className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50"
+                              aria-label={`Hapus data ${child.name}`}
                               title="Hapus data"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -173,7 +189,7 @@ export default function ChildrenPage() {
           )}
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             {editing ? <Edit2 className="h-5 w-5 text-brand-700" /> : <Plus className="h-5 w-5 text-brand-700" />}
             <h3 className="text-base font-semibold text-slate-950">{editing ? "Edit Balita" : "Tambah Balita"}</h3>
@@ -183,9 +199,10 @@ export default function ChildrenPage() {
               Nama
               <input
                 required
+                maxLength={120}
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -193,7 +210,7 @@ export default function ChildrenPage() {
               <select
                 value={form.gender}
                 onChange={(event) => setForm({ ...form, gender: event.target.value as Gender })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               >
                 <option value="female">Perempuan</option>
                 <option value="male">Laki-laki</option>
@@ -204,41 +221,45 @@ export default function ChildrenPage() {
               <input
                 required
                 type="date"
+                max={today}
                 value={form.birth_date}
                 onChange={(event) => setForm({ ...form, birth_date: event.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Nama Orang Tua
               <input
                 value={form.parent_name}
+                maxLength={120}
                 onChange={(event) => setForm({ ...form, parent_name: event.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Wilayah Posyandu
               <input
                 value={form.posyandu_area}
+                maxLength={120}
                 onChange={(event) => setForm({ ...form, posyandu_area: event.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Alamat Demo
               <textarea
                 value={form.address}
+                maxLength={500}
                 onChange={(event) => setForm({ ...form, address: event.target.value })}
                 rows={3}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
               >
                 <UserRound className="h-4 w-4" />
                 {saving ? "Menyimpan..." : editing ? "Simpan Perubahan" : "Tambah Data"}

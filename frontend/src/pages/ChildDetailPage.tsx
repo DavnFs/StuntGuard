@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { ErrorBlock, LoadingBlock } from "../components/StateBlock";
+import { ErrorBlock, LoadingBlock, SuccessBlock } from "../components/StateBlock";
 import StatusBadge from "../components/StatusBadge";
 import { api } from "../services/api";
 import type { Child, Measurement, MeasurementInput } from "../types";
@@ -37,9 +37,11 @@ export default function ChildDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [childData, measurementData] = await Promise.all([
         api.getChild(childId),
@@ -55,8 +57,11 @@ export default function ChildDetailPage() {
   };
 
   useEffect(() => {
-    if (Number.isFinite(childId)) {
+    if (Number.isInteger(childId) && childId > 0) {
       load();
+    } else {
+      setError("ID balita tidak valid.");
+      setLoading(false);
     }
   }, [childId]);
 
@@ -75,11 +80,13 @@ export default function ChildDetailPage() {
     event.preventDefault();
     setSaving(true);
     setError(null);
+    setSuccess(null);
     try {
       const created = await api.createMeasurement(childId, form);
       setLatestResult(created);
       const updated = await api.getMeasurements(childId);
       setMeasurements(updated);
+      setSuccess("Pemeriksaan berhasil disimpan dan grafik pertumbuhan telah diperbarui.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menyimpan pemeriksaan");
     } finally {
@@ -88,8 +95,7 @@ export default function ChildDetailPage() {
   };
 
   if (loading) return <LoadingBlock />;
-  if (error) return <ErrorBlock message={error} />;
-  if (!child) return <ErrorBlock message="Data balita tidak ditemukan." />;
+  if (!child) return <ErrorBlock message={error ?? "Data balita tidak ditemukan."} />;
 
   return (
     <div className="space-y-6">
@@ -97,8 +103,10 @@ export default function ChildDetailPage() {
         <ArrowLeft className="h-4 w-4" />
         Kembali ke Data Balita
       </Link>
+      {error ? <ErrorBlock message={error} /> : null}
+      {success ? <SuccessBlock message={success} /> : null}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <div className="flex flex-col justify-between gap-4 md:flex-row">
           <div>
             <p className="text-sm font-semibold text-brand-700">Profil Balita</p>
@@ -116,7 +124,7 @@ export default function ChildDetailPage() {
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             <LineChartIcon className="h-5 w-5 text-brand-700" />
             <h3 className="text-base font-semibold text-slate-950">Tren Tinggi dan Berat Badan</h3>
@@ -124,20 +132,20 @@ export default function ChildDetailPage() {
           <div className="mt-4 h-80">
             <ResponsiveContainer>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="age_month" label={{ value: "Usia (bulan)", position: "insideBottom", offset: -2 }} />
                 <YAxis yAxisId="height" dataKey="height_cm" label={{ value: "cm", angle: -90, position: "insideLeft" }} />
                 <YAxis yAxisId="weight" orientation="right" dataKey="weight_kg" label={{ value: "kg", angle: 90, position: "insideRight" }} />
                 <Tooltip />
                 <Legend />
-                <Line yAxisId="height" type="monotone" dataKey="height_cm" name="Tinggi Badan (cm)" stroke="#059669" strokeWidth={3} />
-                <Line yAxisId="weight" type="monotone" dataKey="weight_kg" name="Berat Badan (kg)" stroke="#0284c7" strokeWidth={3} />
+                <Line yAxisId="height" type="monotone" dataKey="height_cm" name="Tinggi Badan (cm)" stroke="var(--chart-normal)" strokeWidth={3} />
+                <Line yAxisId="weight" type="monotone" dataKey="weight_kg" name="Berat Badan (kg)" stroke="var(--chart-watch)" strokeWidth={3} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             <CalendarPlus className="h-5 w-5 text-brand-700" />
             <h3 className="text-base font-semibold text-slate-950">Tambah Pemeriksaan</h3>
@@ -148,9 +156,10 @@ export default function ChildDetailPage() {
               <input
                 required
                 type="date"
+                max={today}
                 value={form.measurement_date}
                 onChange={(event) => setForm({ ...form, measurement_date: event.target.value })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -162,7 +171,7 @@ export default function ChildDetailPage() {
                 max={60}
                 value={form.age_month}
                 onChange={(event) => setForm({ ...form, age_month: Number(event.target.value) })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -175,7 +184,7 @@ export default function ChildDetailPage() {
                 step={0.1}
                 value={form.height_cm}
                 onChange={(event) => setForm({ ...form, height_cm: Number(event.target.value) })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -188,13 +197,13 @@ export default function ChildDetailPage() {
                 step={0.1}
                 value={form.weight_kg}
                 onChange={(event) => setForm({ ...form, weight_kg: Number(event.target.value) })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
             >
               <Ruler className="h-4 w-4" />
               {saving ? "Memproses..." : "Simpan & Prediksi"}
@@ -211,7 +220,7 @@ export default function ChildDetailPage() {
               <p className="mt-2 text-xs font-semibold text-slate-600">Mode model: {latestResult.model_mode}</p>
               <Link
                 to="/app/consultations"
-                className="mt-3 inline-flex items-center gap-2 rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+                className="mt-3 inline-flex items-center gap-2 rounded-lg border border-care-600 px-3 py-2 text-xs font-semibold text-care-700 hover:bg-care-50"
               >
                 <MessageSquareText className="h-3.5 w-3.5" />
                 Ajukan Konsultasi
@@ -222,7 +231,7 @@ export default function ChildDetailPage() {
         </section>
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <h3 className="text-base font-semibold text-slate-950">Riwayat Pemeriksaan</h3>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">

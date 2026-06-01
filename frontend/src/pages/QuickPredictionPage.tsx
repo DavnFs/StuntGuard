@@ -66,7 +66,7 @@ export default function QuickPredictionPage() {
       {error ? <ErrorBlock message={error} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             <ClipboardPlus className="h-5 w-5 text-brand-700" />
             <h3 className="text-base font-semibold text-slate-950">Input Pemeriksaan</h3>
@@ -81,7 +81,7 @@ export default function QuickPredictionPage() {
                 max={60}
                 value={form.age_month}
                 onChange={(event) => setForm({ ...form, age_month: Number(event.target.value) })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -89,7 +89,7 @@ export default function QuickPredictionPage() {
               <select
                 value={form.gender}
                 onChange={(event) => setForm({ ...form, gender: event.target.value as Gender })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               >
                 <option value="female">Perempuan</option>
                 <option value="male">Laki-laki</option>
@@ -105,7 +105,7 @@ export default function QuickPredictionPage() {
                 step={0.1}
                 value={form.height_cm}
                 onChange={(event) => setForm({ ...form, height_cm: Number(event.target.value) })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -118,13 +118,13 @@ export default function QuickPredictionPage() {
                 step={0.1}
                 value={form.weight_kg}
                 onChange={(event) => setForm({ ...form, weight_kg: Number(event.target.value) })}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
             >
               <Gauge className="h-4 w-4" />
               {loading ? "Memproses..." : "Prediksi"}
@@ -132,7 +132,7 @@ export default function QuickPredictionPage() {
           </form>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <h3 className="text-base font-semibold text-slate-950">Hasil Prediksi</h3>
           {result ? (
             <div className="mt-4">

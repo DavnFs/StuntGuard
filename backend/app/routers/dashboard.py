@@ -1,12 +1,12 @@
 from collections import OrderedDict
-from statistics import mean
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
+from sqlalchemy import Integer, cast, func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
+from app.services.authentication import AuthenticatedUser, require_admin
 
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -16,7 +16,10 @@ GENDER_ORDER = ["male", "female"]
 
 
 @router.get("/summary", response_model=schemas.DashboardSummary)
-def dashboard_summary(db: Session = Depends(get_db)):
+def dashboard_summary(
+    _current_user: AuthenticatedUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     total_children = db.query(models.Child).count()
     total_measurements = db.query(models.Measurement).count()
 
@@ -99,26 +102,33 @@ def dashboard_summary(db: Session = Depends(get_db)):
         .count()
     )
 
-    age_group_rows = db.query(models.Measurement).all()
-    grouped: dict[str, dict[str, list[float]]] = OrderedDict()
-    for measurement in age_group_rows:
-        start = (measurement.age_month // 12) * 12
-        end = min(start + 11, 60)
-        label = f"{start}-{end} bulan"
-        grouped.setdefault(label, {"height": [], "weight": []})
-        grouped[label]["height"].append(float(measurement.height_cm))
-        if measurement.weight_kg is not None:
-            grouped[label]["weight"].append(float(measurement.weight_kg))
+    age_group_start = cast(models.Measurement.age_month / 12, Integer) * 12
+    age_group_rows = (
+        db.query(
+            age_group_start.label("start"),
+            func.avg(models.Measurement.height_cm).label("average_height"),
+            func.avg(models.Measurement.weight_kg).label("average_weight"),
+        )
+        .group_by(age_group_start)
+        .order_by(age_group_start)
+        .all()
+    )
 
     average_height_by_age_group = [
-        {"age_group": label, "average_height_cm": round(mean(values["height"]), 2)}
-        for label, values in grouped.items()
-        if values["height"]
+        {
+            "age_group": f"{start}-{min(start + 11, 60)} bulan",
+            "average_height_cm": round(float(average_height), 2),
+        }
+        for start, average_height, _average_weight in age_group_rows
+        if average_height is not None
     ]
     average_weight_by_age_group = [
-        {"age_group": label, "average_weight_kg": round(mean(values["weight"]), 2)}
-        for label, values in grouped.items()
-        if values["weight"]
+        {
+            "age_group": f"{start}-{min(start + 11, 60)} bulan",
+            "average_weight_kg": round(float(average_weight), 2),
+        }
+        for start, _average_height, average_weight in age_group_rows
+        if average_weight is not None
     ]
 
     return schemas.DashboardSummary(

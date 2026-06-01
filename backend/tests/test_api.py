@@ -19,6 +19,7 @@ def disable_llm(monkeypatch):
     monkeypatch.setenv("CHAT_GUEST_DAILY_LIMIT", "10")
     monkeypatch.setenv("CHAT_GUEST_MINUTE_LIMIT", "3")
     monkeypatch.setenv("CHAT_LIMIT_COUNT_SOURCES", "all")
+    monkeypatch.setenv("TRUST_PROXY_HEADERS", "true")
     for key in ("GEMINI_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"):
         monkeypatch.delenv(key, raising=False)
 
@@ -27,6 +28,50 @@ def test_health():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+
+
+def login_headers(email="parent@demo.com", password="password"):
+    response = client.post("/auth/login", json={"email": email, "password": password})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["expires_at"] > 0
+    return {"Authorization": f"Bearer {payload['token']}"}
+
+
+def test_private_children_route_requires_login():
+    response = client.get("/children")
+    assert response.status_code == 401
+
+
+def test_client_role_headers_do_not_grant_access():
+    response = client.get(
+        "/dashboard/summary",
+        headers={
+            "X-StuntGuard-Role": "admin",
+            "X-StuntGuard-User-Id": "admin@demo.com",
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_dashboard_requires_admin_role():
+    parent_response = client.get("/dashboard/summary", headers=login_headers())
+    assert parent_response.status_code == 403
+
+    admin_response = client.get("/dashboard/summary", headers=login_headers("admin@demo.com"))
+    assert admin_response.status_code == 200
+
+
+def test_chatbot_rejects_stored_child_context_for_guests(monkeypatch):
+    disable_llm(monkeypatch)
+    response = client.post(
+        "/chatbot",
+        json={"message": "Apa itu stunting?", "child_id": 1},
+        headers=chat_headers(),
+    )
+    assert response.status_code == 401
 
 
 def test_predict():

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.database import get_db
+from app.services.authentication import AuthenticatedUser, require_admin, require_current_user
 
 
 router = APIRouter(prefix="/consultations", tags=["consultations"])
@@ -25,8 +26,9 @@ def _to_read(ticket: models.ConsultationTicket) -> schemas.ConsultationRead:
 
 @router.get("", response_model=list[schemas.ConsultationRead])
 def list_consultations(
-    status_filter: str | None = None,
-    child_id: int | None = None,
+    status_filter: schemas.ConsultationStatus | None = None,
+    child_id: int | None = Query(default=None, gt=0),
+    _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
     tickets = crud.list_consultations(db, status=status_filter, child_id=child_id)
@@ -34,7 +36,11 @@ def list_consultations(
 
 
 @router.post("", response_model=schemas.ConsultationRead, status_code=status.HTTP_201_CREATED)
-def create_consultation(payload: schemas.ConsultationCreate, db: Session = Depends(get_db)):
+def create_consultation(
+    payload: schemas.ConsultationCreate,
+    _current_user: AuthenticatedUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+):
     child = crud.get_child(db, payload.child_id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -50,6 +56,7 @@ def create_consultation(payload: schemas.ConsultationCreate, db: Session = Depen
 def reply_consultation(
     consultation_id: int,
     payload: schemas.ConsultationReply,
+    _current_user: AuthenticatedUser = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     ticket = crud.get_consultation(db, consultation_id)
@@ -62,6 +69,7 @@ def reply_consultation(
 def update_consultation_status(
     consultation_id: int,
     payload: schemas.ConsultationStatusUpdate,
+    _current_user: AuthenticatedUser = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     ticket = crud.get_consultation(db, consultation_id)

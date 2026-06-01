@@ -32,7 +32,7 @@ export default function MeasurementsPage() {
         <p className="text-sm font-semibold text-brand-700">Data Pemeriksaan</p>
         <h2 className="mt-1 text-2xl font-bold text-slate-950">Semua Pengukuran Balita</h2>
       </div>
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead>

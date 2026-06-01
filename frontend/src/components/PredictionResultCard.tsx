@@ -19,13 +19,13 @@ const DISCLAIMER =
 const statusTone: Record<NutritionStatus, { badge: string; tone: string; iconTone: string }> = {
   normal: {
     badge: "Normal",
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    iconTone: "bg-emerald-100 text-emerald-700",
+    tone: "border-care-200 bg-care-50 text-care-800",
+    iconTone: "bg-care-100 text-care-700",
   },
   tall: {
     badge: "Perlu Dipantau",
-    tone: "border-sky-200 bg-sky-50 text-sky-800",
-    iconTone: "bg-sky-100 text-sky-700",
+    tone: "border-brand-200 bg-brand-50 text-brand-800",
+    iconTone: "bg-brand-100 text-brand-700",
   },
   stunted: {
     badge: "Risiko Stunting",
@@ -145,11 +145,11 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
       <div className="mt-5 flex flex-wrap gap-2">
         {risky ? (
           <>
-            <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+            <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-care-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-care-700">
               <MessageCircle className="h-4 w-4" />
               Tanya AI Gizi
             </Link>
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-xl border border-brand-600 bg-white px-4 py-2.5 text-sm font-bold text-brand-700 hover:bg-brand-50">
+            <Link to="/login" className="inline-flex items-center gap-2 rounded-xl border border-care-600 bg-white px-4 py-2.5 text-sm font-bold text-care-700 hover:bg-care-50">
               <UserPlus className="h-4 w-4" />
               Daftar untuk Konsultasi
             </Link>
@@ -160,7 +160,7 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
           </>
         ) : (
           <>
-            <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+            <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-care-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-care-700">
               <MessageCircle className="h-4 w-4" />
               Pelajari Edukasi Gizi
             </Link>

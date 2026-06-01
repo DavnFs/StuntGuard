@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app import config as _config  # noqa: F401 - ensures .env files are loaded
 from app import models
+from app.services.authentication import AuthenticatedUser, get_client_ip
 
 
 LIMIT_MESSAGE = (
@@ -57,28 +58,19 @@ def _limit_count_sources() -> list[str] | None:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
-def resolve_chat_identity(request: Request) -> ChatIdentity:
-    forwarded_for = request.headers.get("x-forwarded-for", "")
-    ip_address = forwarded_for.split(",", 1)[0].strip()
-
-    if not ip_address and request.client:
-        ip_address = request.client.host
-
-    ip_address = ip_address or "unknown"
-
-    role = request.headers.get("x-stuntguard-role", "guest").strip().lower()
-
-    user_id = (
-        request.headers.get("x-stuntguard-user-id")
-        or request.headers.get("x-stuntguard-email")
-        or request.headers.get("x-user-id")
-    )
-    user_id = user_id.strip().lower() if user_id else None
-
-    if role not in {"parent", "admin"} or not user_id:
+def resolve_chat_identity(
+    request: Request,
+    current_user: AuthenticatedUser | None = None,
+) -> ChatIdentity:
+    ip_address = get_client_ip(request)
+    if current_user is None:
         return ChatIdentity(user_id=None, ip_address=ip_address, role="guest")
 
-    return ChatIdentity(user_id=user_id, ip_address=ip_address, role=role)
+    return ChatIdentity(
+        user_id=current_user.email,
+        ip_address=ip_address,
+        role=current_user.role,
+    )
 
 
 def _usage_query(db: Session, identity: ChatIdentity, since: datetime):

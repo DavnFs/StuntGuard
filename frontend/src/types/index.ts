@@ -171,6 +171,7 @@ export interface ModelInfo {
 
 export interface AuthUser {
   token: string;
+  expires_at: number;
   email: string;
   name: string;
   role: UserRole;

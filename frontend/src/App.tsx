@@ -1,8 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, PropsWithChildren, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import Layout from "./components/Layout";
 import { getCurrentUser } from "./services/auth";
+import type { UserRole } from "./types";
 
 const ChatbotPage = lazy(() => import("./pages/ChatbotPage"));
 const ChildDetailPage = lazy(() => import("./pages/ChildDetailPage"));
@@ -20,6 +21,15 @@ function RequireAuth() {
   return getCurrentUser() ? <Layout /> : <Navigate to="/login" replace />;
 }
 
+function RequireRole({ children, role }: PropsWithChildren<{ role: UserRole }>) {
+  const user = getCurrentUser();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== role) {
+    return <Navigate to={user.role === "admin" ? "/app/admin" : "/app/parent"} replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <Suspense fallback={<div className="p-6 text-sm text-slate-500">Memuat halaman...</div>}>
@@ -29,11 +39,11 @@ export default function App() {
         <Route path="/chatbot" element={<ChatbotPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/app/parent" element={<ParentDashboardPage />} />
-          <Route path="/app/admin" element={<DashboardPage />} />
+          <Route path="/app/admin" element={<RequireRole role="admin"><DashboardPage /></RequireRole>} />
           <Route path="/app/children" element={<ChildrenPage />} />
           <Route path="/app/children/:id" element={<ChildDetailPage />} />
           <Route path="/app/predict" element={<QuickPredictionPage />} />
-          <Route path="/app/measurements" element={<MeasurementsPage />} />
+          <Route path="/app/measurements" element={<RequireRole role="admin"><MeasurementsPage /></RequireRole>} />
           <Route path="/app/consultations" element={<ConsultationsPage />} />
           <Route path="/app/model" element={<ModelInfoPage />} />
           <Route path="/dashboard" element={<Navigate to="/app/admin" replace />} />

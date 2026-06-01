@@ -103,14 +103,14 @@ export default function ChatbotPage() {
       </div>
 
       {contextSummary ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+        <div className="rounded-lg border border-care-200 bg-care-50 p-4 text-sm text-care-800">
           Konteks skrining aktif: {contextSummary}. Asisten akan memakai konteks ini untuk memberi edukasi umum, bukan diagnosis.
         </div>
       ) : null}
 
       {error ? <ErrorBlock message={error} /> : null}
 
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white shadow-card">
         <div className="h-[520px] overflow-y-auto p-5">
           <div className="space-y-4">
             {messages.map((message, index) => (
@@ -158,7 +158,7 @@ export default function ChatbotPage() {
               </div>
             ))}
             {loading ? (
-              <div className="text-sm text-slate-500">Menyiapkan jawaban aman...</div>
+              <div role="status" aria-live="polite" className="text-sm text-slate-500">Menyiapkan jawaban aman...</div>
             ) : null}
           </div>
         </div>
@@ -170,7 +170,8 @@ export default function ChatbotPage() {
                 key={item}
                 type="button"
                 onClick={() => ask(item)}
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                disabled={loading}
+                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {item}
               </button>
@@ -181,13 +182,14 @@ export default function ChatbotPage() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               maxLength={500}
+              aria-label="Pertanyaan edukasi"
               placeholder="Tulis pertanyaan edukasi..."
-              className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600"
+              className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
             />
             <button
               type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+              disabled={loading || !input.trim()}
+              className="inline-flex items-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
             >
               <Send className="h-4 w-4" />
               Kirim

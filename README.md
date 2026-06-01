@@ -214,7 +214,7 @@ npm run dev
 - Parent: `parent@demo.com` / `password`
 - Admin: `admin@demo.com` / `password`
 
-Auth ini hanya demo role switcher sederhana, bukan sistem keamanan produksi.
+Auth demo memakai bearer token bertanda tangan dengan masa berlaku terbatas. Untuk deployment di luar laptop lokal, isi `STUNTGUARD_SECRET_KEY`, ubah password demo, batasi `CORS_ALLOWED_ORIGINS`, dan aktifkan `TRUST_PROXY_HEADERS` hanya jika reverse proxy tepercaya menulis ulang `X-Forwarded-For`. Mekanisme ini tetap untuk demo akademik, bukan pengganti sistem identitas produksi.
 
 ## Demo Flow
 

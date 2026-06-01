@@ -4,13 +4,18 @@ from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.database import get_db
 from app.ml.predict import predict_nutrition
+from app.services.authentication import AuthenticatedUser, require_admin, require_current_user
 
 
 router = APIRouter(tags=["measurements"])
 
 
 @router.get("/children/{child_id}/measurements", response_model=list[schemas.MeasurementRead])
-def get_child_measurements(child_id: int, db: Session = Depends(get_db)):
+def get_child_measurements(
+    child_id: int,
+    _current_user: AuthenticatedUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+):
     child = crud.get_child(db, child_id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -25,6 +30,7 @@ def get_child_measurements(child_id: int, db: Session = Depends(get_db)):
 def create_child_measurement(
     child_id: int,
     payload: schemas.MeasurementCreate,
+    _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
     child = crud.get_child(db, child_id)
@@ -42,12 +48,19 @@ def create_child_measurement(
 
 
 @router.get("/measurements", response_model=list[schemas.MeasurementRead])
-def get_measurements(db: Session = Depends(get_db)):
+def get_measurements(
+    _current_user: AuthenticatedUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     return crud.list_measurements(db)
 
 
 @router.delete("/measurements/{measurement_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_measurement(measurement_id: int, db: Session = Depends(get_db)):
+def delete_measurement(
+    measurement_id: int,
+    _current_user: AuthenticatedUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     measurement = crud.get_measurement(db, measurement_id)
     if measurement is None:
         raise HTTPException(status_code=404, detail="Measurement not found")

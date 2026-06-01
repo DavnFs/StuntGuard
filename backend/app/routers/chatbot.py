@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
+from app.services.authentication import AuthenticatedUser, get_optional_current_user
 from app.services.chat_usage import check_chat_rate_limit, record_chat_usage, resolve_chat_identity
 from app.services.chatbot_guardrails import (
     IMMEDIATE_NEXT_STEP_KEYWORDS,
@@ -146,28 +147,35 @@ def rule_based_reply(message: str, child_context: schemas.ChatChildContext | Non
 
 
 @router.post("/chatbot", response_model=schemas.ChatResponse)
-def chatbot(payload: schemas.ChatRequest, request: Request, db: Session = Depends(get_db)):
-    identity = resolve_chat_identity(request)
-    provider = configured_provider()
-    child_context = payload.child_context or _context_from_latest_measurement(db, payload.child_id)
+def chatbot(
+    payload: schemas.ChatRequest,
+    request: Request,
+    current_user: AuthenticatedUser | None = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
+    identity = resolve_chat_identity(request, current_user)
+    if payload.child_id is not None and current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Silakan masuk untuk memakai konteks riwayat balita.",
+        )
+
+    child_context = (
+        _context_from_latest_measurement(db, payload.child_id)
+        if payload.child_id is not None
+        else payload.child_context
+    )
     message = payload.message.strip()
-
-    if not message:
+    allowed, limit_message = check_chat_rate_limit(db, identity)
+    if not allowed:
         return schemas.ChatResponse(
-            reply="Silakan tulis pertanyaan terlebih dahulu.",
-            source="validation",
-            safety_level="safe",
-            suggested_actions=["Tanyakan tentang stunting, gizi balita, atau hasil skrining"],
-        )
-
-    if len(message) > 500:
-        return schemas.ChatResponse(
-            reply="Pertanyaan terlalu panjang. Mohon ringkas menjadi maksimal 500 karakter agar mudah dijawab.",
-            source="validation",
+            reply=limit_message or "Batas penggunaan chatbot sudah tercapai.",
+            source="rate-limit",
             safety_level="limited",
-            suggested_actions=["Ringkas pertanyaan menjadi lebih singkat"],
+            suggested_actions=["Gunakan fitur konsultasi ke petugas bila membutuhkan bantuan lanjutan"],
         )
 
+    provider = configured_provider()
     classification = classify_message(message, child_context)
     blocked = input_guardrail_reply(classification)
     if blocked:
@@ -177,15 +185,6 @@ def chatbot(payload: schemas.ChatRequest, request: Request, db: Session = Depend
             source="guardrail",
             safety_level=blocked["safety_level"],
             suggested_actions=blocked["suggested_actions"],
-        )
-
-    allowed, limit_message = check_chat_rate_limit(db, identity)
-    if not allowed:
-        return schemas.ChatResponse(
-            reply=limit_message or "Batas penggunaan chatbot sudah tercapai.",
-            source="rate-limit",
-            safety_level="limited",
-            suggested_actions=["Gunakan fitur konsultasi ke petugas bila membutuhkan bantuan lanjutan"],
         )
 
     system_prompt = build_system_prompt(child_context)

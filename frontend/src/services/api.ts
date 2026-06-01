@@ -15,9 +15,19 @@ import type {
   PredictionRequest,
   PredictionResponse,
 } from "../types";
-import { getCurrentUser } from "./auth";
+import { clearCurrentUser, getCurrentUser } from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+function errorMessageFromDetail(detail: unknown, fallback: string) {
+  if (typeof detail === "string") return detail;
+  if (!Array.isArray(detail) || detail.length === 0) return fallback;
+
+  const first = detail[0] as { loc?: unknown[]; msg?: unknown };
+  const field = Array.isArray(first.loc) ? first.loc.slice(1).join(".") : "";
+  const message = typeof first.msg === "string" ? first.msg : "Input tidak valid";
+  return field ? `Periksa ${field}: ${message}` : message;
+}
 
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
@@ -27,22 +37,36 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
   const currentUser = getCurrentUser();
   if (currentUser) {
     headers.set("Authorization", `Bearer ${currentUser.token}`);
-    headers.set("X-StuntGuard-User-Id", currentUser.email);
-    headers.set("X-StuntGuard-Role", currentUser.role);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new Error("Server belum dapat dihubungi. Periksa koneksi lalu coba lagi.");
+  }
 
   if (!response.ok) {
-    let message = `Request gagal (${response.status})`;
-    try {
-      const payload = await response.json();
-      message = payload.detail ?? message;
-    } catch {
-      message = response.statusText || message;
+    let message =
+      response.status >= 500
+        ? "Server sedang mengalami kendala. Silakan coba lagi beberapa saat lagi."
+        : `Request gagal (${response.status})`;
+    if (response.status < 500) {
+      try {
+        const payload = await response.json();
+        message = errorMessageFromDetail(payload.detail, message);
+      } catch {
+        message = response.statusText || message;
+      }
+    }
+    if (response.status === 401) {
+      clearCurrentUser();
+      if (window.location.pathname.startsWith("/app")) {
+        window.location.replace("/login");
+      }
     }
     throw new Error(message);
   }

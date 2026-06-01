@@ -1,7 +1,7 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { MessageSquareReply, Send } from "lucide-react";
 
-import { ErrorBlock, LoadingBlock } from "../components/StateBlock";
+import { ErrorBlock, LoadingBlock, SuccessBlock } from "../components/StateBlock";
 import { api } from "../services/api";
 import { getCurrentUser } from "../services/auth";
 import type { Child, Consultation, ConsultationInput } from "../types";
@@ -21,8 +21,7 @@ export default function ConsultationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const childOptions = useMemo(() => children, [children]);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -49,10 +48,12 @@ export default function ConsultationsPage() {
     event.preventDefault();
     setSaving(true);
     setError(null);
+    setSuccess(null);
     try {
       await api.createConsultation(form);
-      setForm({ child_id: childOptions[0]?.id ?? 0, subject: "", message: "", latest_measurement_id: null });
+      setForm({ child_id: children[0]?.id ?? 0, subject: "", message: "", latest_measurement_id: null });
       setTickets(await api.getConsultations());
+      setSuccess("Ticket konsultasi berhasil dikirim.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengirim konsultasi");
     } finally {
@@ -64,12 +65,30 @@ export default function ConsultationsPage() {
     const text = reply[ticket.id]?.trim();
     if (!text) return;
     setSaving(true);
+    setError(null);
+    setSuccess(null);
     try {
       await api.replyConsultation(ticket.id, text, "answered");
       setReply((items) => ({ ...items, [ticket.id]: "" }));
       setTickets(await api.getConsultations());
+      setSuccess("Balasan petugas berhasil dikirim.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal membalas konsultasi");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const closeTicket = async (ticket: Consultation) => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.updateConsultationStatus(ticket.id, "closed");
+      setTickets(await api.getConsultations());
+      setSuccess("Ticket konsultasi ditutup.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menutup konsultasi");
     } finally {
       setSaving(false);
     }
@@ -87,14 +106,15 @@ export default function ConsultationsPage() {
       </div>
 
       {error ? <ErrorBlock message={error} /> : null}
+      {success ? <SuccessBlock message={success} /> : null}
 
       {!isAdmin ? (
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             <Send className="h-5 w-5 text-brand-700" />
             <h3 className="text-base font-semibold text-slate-950">Ticket Baru</h3>
           </div>
-          {childOptions.length === 0 ? (
+          {children.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">Tambahkan data anak terlebih dahulu sebelum mengirim konsultasi.</p>
           ) : (
             <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={submitTicket}>
@@ -103,9 +123,9 @@ export default function ConsultationsPage() {
                 <select
                   value={form.child_id}
                   onChange={(event) => setForm({ ...form, child_id: Number(event.target.value) })}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
                 >
-                  {childOptions.map((child) => (
+                  {children.map((child) => (
                     <option key={child.id} value={child.id}>{child.name}</option>
                   ))}
                 </select>
@@ -114,25 +134,27 @@ export default function ConsultationsPage() {
                 Subjek
                 <input
                   required
+                  maxLength={160}
                   value={form.subject}
                   onChange={(event) => setForm({ ...form, subject: event.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
                 />
               </label>
               <label className="block text-sm font-medium text-slate-700 md:col-span-2">
                 Pesan
                 <textarea
                   required
+                  maxLength={2000}
                   rows={4}
                   value={form.message}
                   onChange={(event) => setForm({ ...form, message: event.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand-600"
+                  className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
                 />
               </label>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
               >
                 <Send className="h-4 w-4" />
                 {saving ? "Mengirim..." : "Kirim Ticket"}
@@ -142,7 +164,7 @@ export default function ConsultationsPage() {
         </section>
       ) : null}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <div className="flex items-center gap-2">
           <MessageSquareReply className="h-5 w-5 text-brand-700" />
           <h3 className="text-base font-semibold text-slate-950">Daftar Konsultasi</h3>
@@ -152,7 +174,7 @@ export default function ConsultationsPage() {
             <p className="text-sm text-slate-500">Belum ada ticket konsultasi.</p>
           ) : (
             tickets.map((ticket) => (
-              <article key={ticket.id} className="rounded-lg border border-slate-200 p-4">
+              <article key={ticket.id} className="rounded-xl border border-slate-200 p-4">
                 <div className="flex flex-col justify-between gap-2 sm:flex-row">
                   <div>
                     <p className="font-semibold text-slate-950">{ticket.subject}</p>
@@ -177,22 +199,21 @@ export default function ConsultationsPage() {
                       value={reply[ticket.id] ?? ""}
                       onChange={(event) => setReply((items) => ({ ...items, [ticket.id]: event.target.value }))}
                       placeholder="Tulis balasan edukatif..."
-                      className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600"
+                      maxLength={2000}
+                      className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
                     />
                     <button
                       type="button"
                       onClick={() => sendReply(ticket)}
                       disabled={saving}
-                      className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                      className="rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
                     >
                       Balas
                     </button>
                     <button
                       type="button"
-                      onClick={async () => {
-                        await api.updateConsultationStatus(ticket.id, "closed");
-                        setTickets(await api.getConsultations());
-                      }}
+                      onClick={() => closeTicket(ticket)}
+                      disabled={saving}
                       className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
                       Tutup

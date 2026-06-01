@@ -1,4 +1,6 @@
 import json
+import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -8,6 +10,8 @@ import pandas as pd
 
 from app.schemas import ModelInfoResponse, PredictionRequest, PredictionResponse
 
+
+logger = logging.getLogger(__name__)
 
 ARTIFACT_DIR = Path(__file__).resolve().parent / "model_artifacts"
 MODEL_PATH = ARTIFACT_DIR / "stunting_model.joblib"
@@ -163,6 +167,7 @@ def _normalize_normal_values(raw: pd.DataFrame) -> pd.DataFrame:
     return normalized[["age_month", "gender_code", "height_cm", "weight_kg"]]
 
 
+@lru_cache(maxsize=1)
 def _load_normal_values() -> Optional[pd.DataFrame]:
     if not NORMAL_VALUES_PATH.exists():
         return None
@@ -383,6 +388,7 @@ def _legacy_recommendation(summary: Dict[str, str], nutrition: Dict[str, Any], c
     return " ".join(parts)
 
 
+@lru_cache(maxsize=8)
 def _load_json(path: Path) -> Optional[Dict[str, Any]]:
     if not path.exists():
         return None
@@ -390,6 +396,7 @@ def _load_json(path: Path) -> Optional[Dict[str, Any]]:
         return json.load(file)
 
 
+@lru_cache(maxsize=1)
 def _load_labels() -> list[str]:
     if LABELS_PATH.exists():
         with LABELS_PATH.open("r", encoding="utf-8") as file:
@@ -399,8 +406,31 @@ def _load_labels() -> list[str]:
     return DEFAULT_LABELS
 
 
+def _sanitize_public_metadata(value: Any, key: str = "") -> Any:
+    if isinstance(value, dict):
+        return {
+            item_key: _sanitize_public_metadata(item_value, item_key)
+            for item_key, item_value in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_public_metadata(item) for item in value]
+    if isinstance(value, str) and ("path" in key.lower() or "file" in key.lower()):
+        return Path(value).name
+    return value
+
+
 def _is_pipeline_model(model: Any) -> bool:
     return hasattr(model, "named_steps")
+
+
+@lru_cache(maxsize=1)
+def _load_model() -> Any:
+    return joblib.load(MODEL_PATH)
+
+
+@lru_cache(maxsize=1)
+def _load_scaler() -> Any:
+    return joblib.load(SCALER_PATH)
 
 
 def _normalize_status(raw_status: Any) -> str:
@@ -447,7 +477,7 @@ def _predict_with_artifact(
     model_mode: str,
 ) -> tuple[str, Optional[float]]:
     if not _is_pipeline_model(model) and SCALER_PATH.exists():
-        scaler = joblib.load(SCALER_PATH)
+        scaler = _load_scaler()
         features = scaler.transform(_numeric_features(payload))
         raw_status = model.predict(features)[0]
         confidence = None
@@ -525,7 +555,6 @@ def _build_prediction_response(
         "confidence_percentage": round(float(confidence * 100), 2) if confidence is not None else None,
         "model_mode": model_mode,
         "normal_values_available": normal_values is not None,
-        "normal_values_file": str(NORMAL_VALUES_PATH) if NORMAL_VALUES_PATH.exists() else None,
     }
 
     return PredictionResponse(
@@ -554,12 +583,13 @@ def predict_nutrition(payload: PredictionRequest) -> PredictionResponse:
 
     if MODEL_PATH.exists():
         try:
-            model = joblib.load(MODEL_PATH)
+            model = _load_model()
             metrics = _load_json(METRICS_PATH)
             model_mode = _model_mode_from_metrics(metrics, model)
             status, confidence = _predict_with_artifact(model, payload, record, model_mode)
             return _build_prediction_response(payload, status, confidence, model_mode, growth_notes)
-        except Exception as exc:
+        except Exception:
+            logger.exception("Model inference failed; using the rule-based fallback.")
             status = _fallback_status(
                 payload.age_month,
                 payload.gender,
@@ -572,7 +602,7 @@ def predict_nutrition(payload: PredictionRequest) -> PredictionResponse:
                 None,
                 "rule-based-fallback",
                 growth_notes,
-                f"model scikit-learn belum dapat digunakan ({exc}); hasil memakai fallback demo.",
+                "model scikit-learn belum dapat digunakan; hasil memakai fallback demo.",
             )
 
     status = _fallback_status(payload.age_month, payload.gender, payload.height_cm, payload.weight_kg)
@@ -590,8 +620,8 @@ def get_model_info() -> ModelInfoResponse:
     metrics = _load_json(METRICS_PATH)
     labels = _load_labels()
     artifact_status = {
-        "model": str(MODEL_PATH) if MODEL_PATH.exists() else None,
-        "scaler": str(SCALER_PATH) if SCALER_PATH.exists() else None,
+        "model_available": MODEL_PATH.exists(),
+        "scaler_available": SCALER_PATH.exists(),
         "ready_for_inference": MODEL_PATH.exists(),
         "format": "joblib",
     }
@@ -602,7 +632,7 @@ def get_model_info() -> ModelInfoResponse:
 
     if MODEL_PATH.exists():
         try:
-            model = joblib.load(MODEL_PATH)
+            model = _load_model()
             model_name = model.__class__.__name__
             artifact_status["model_container"] = (
                 "pipeline" if _is_pipeline_model(model) else "estimator"
@@ -612,8 +642,9 @@ def get_model_info() -> ModelInfoResponse:
             )
             uses_external_estimator = bool(artifact_status["uses_separate_scaler"])
             active_model_mode = _model_mode_from_metrics(metrics, model)
-        except Exception as exc:
-            artifact_status["load_warning"] = str(exc)
+        except Exception:
+            logger.exception("Model metadata loading failed.")
+            artifact_status["load_warning"] = "Model artifact could not be loaded."
 
     if metrics and not uses_external_estimator:
         model_name = metrics.get("best_model", metrics.get("model_name", model_name))
@@ -629,6 +660,8 @@ def get_model_info() -> ModelInfoResponse:
         }
     else:
         metrics = {"artifact_status": artifact_status}
+
+    metrics = _sanitize_public_metadata(metrics)
 
     trained_features = HEIGHT_ONLY_FEATURES if active_model_mode == "height-only-fallback-model" else FEATURES
     training_dataset_info = {}

@@ -42,35 +42,35 @@ export default function ModelInfoPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card lg:col-span-2">
           <div className="flex items-center gap-2">
             <BrainCircuit className="h-5 w-5 text-brand-700" />
             <h3 className="text-base font-semibold text-slate-950">Model Aktif</h3>
           </div>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <dt className="text-sm text-slate-500">Nama model</dt>
               <dd className="mt-1 font-semibold text-slate-950">{info.model_name}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <dt className="text-sm text-slate-500">Mode aktif</dt>
               <dd className="mt-1 font-semibold text-slate-950">{info.active_model_mode}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+            <div className="rounded-xl border border-slate-200 p-4 sm:col-span-2">
               <dt className="text-sm text-slate-500">Fitur training</dt>
               <dd className="mt-1 font-semibold text-slate-950">{info.trained_features.join(", ")}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+            <div className="rounded-xl border border-slate-200 p-4 sm:col-span-2">
               <dt className="text-sm text-slate-500">Fitur turunan</dt>
               <dd className="mt-1 font-semibold text-slate-950">
                 {info.engineered_features.length ? info.engineered_features.join(", ") : "Tidak tersedia pada fallback height-only"}
               </dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+            <div className="rounded-xl border border-slate-200 p-4 sm:col-span-2">
               <dt className="text-sm text-slate-500">Label prediksi</dt>
               <dd className="mt-1 font-semibold text-slate-950">{info.labels.join(", ")}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4 sm:col-span-2">
+            <div className="rounded-xl border border-slate-200 p-4 sm:col-span-2">
               <dt className="text-sm text-slate-500">Weight tersedia saat training</dt>
               <dd className="mt-1 font-semibold text-slate-950">{info.weight_available_during_training ? "Ya" : "Tidak"}</dd>
             </div>
@@ -86,26 +86,26 @@ export default function ModelInfoPage() {
         </section>
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <div className="flex items-center gap-2">
           <Database className="h-5 w-5 text-brand-700" />
           <h3 className="text-base font-semibold text-slate-950">Metrics Training</h3>
         </div>
         {bestMetrics ? (
           <div className="mt-4 grid gap-4 md:grid-cols-4">
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-sm text-slate-500">Accuracy</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.accuracy)}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-sm text-slate-500">Macro Precision</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.macro_precision)}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-sm text-slate-500">Macro Recall</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.macro_recall)}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-sm text-slate-500">Macro F1</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.macro_f1)}</p>
             </div>
@@ -118,7 +118,7 @@ export default function ModelInfoPage() {
         )}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <h3 className="text-base font-semibold text-slate-950">Feature Importance</h3>
         {info.feature_importance?.length ? (
           <div className="mt-4 overflow-x-auto">
@@ -146,14 +146,14 @@ export default function ModelInfoPage() {
         )}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <h3 className="text-base font-semibold text-slate-950">Informasi Dataset Training</h3>
         <pre className="mt-4 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
           {JSON.stringify(info.training_dataset_info, null, 2)}
         </pre>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <h3 className="text-base font-semibold text-slate-950">Catatan Dataset dan Batasan</h3>
         <p className="mt-3 text-sm leading-6 text-slate-600">
           Dataset menggunakan usia, gender, tinggi badan, dan berat badan sebagai fitur. Label status gizi kemungkinan sangat berkaitan dengan aturan antropometri atau standar pertumbuhan. Karena itu model cocok untuk demonstrasi skrining awal, bukan diagnosis medis lengkap. Faktor lain seperti riwayat penyakit, prematuritas, pola makan, sanitasi, dan pemeriksaan klinis belum digunakan.

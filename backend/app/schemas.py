@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 Gender = Literal["male", "female"]
@@ -12,13 +12,44 @@ UserRole = Literal["parent", "admin"]
 ConsultationStatus = Literal["pending", "answered", "closed"]
 
 
+def _strip_required(value: str) -> str:
+    stripped = value.strip()
+    if not stripped:
+        raise ValueError("must not be blank")
+    return stripped
+
+
+def _strip_optional(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
 class ChildBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     gender: Gender
     birth_date: date
     parent_name: Optional[str] = Field(default=None, max_length=120)
-    address: Optional[str] = None
+    address: Optional[str] = Field(default=None, max_length=500)
     posyandu_area: Optional[str] = Field(default=None, max_length=120)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        return _strip_required(value)
+
+    @field_validator("parent_name", "address", "posyandu_area", mode="before")
+    @classmethod
+    def strip_optional_fields(cls, value: Optional[str]) -> Optional[str]:
+        return _strip_optional(value)
+
+    @field_validator("birth_date")
+    @classmethod
+    def reject_future_birth_date(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("must not be in the future")
+        return value
 
 
 class ChildCreate(ChildBase):
@@ -30,8 +61,25 @@ class ChildUpdate(BaseModel):
     gender: Optional[Gender] = None
     birth_date: Optional[date] = None
     parent_name: Optional[str] = Field(default=None, max_length=120)
-    address: Optional[str] = None
+    address: Optional[str] = Field(default=None, max_length=500)
     posyandu_area: Optional[str] = Field(default=None, max_length=120)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: Optional[str]) -> Optional[str]:
+        return _strip_required(value) if value is not None else None
+
+    @field_validator("parent_name", "address", "posyandu_area", mode="before")
+    @classmethod
+    def strip_optional_fields(cls, value: Optional[str]) -> Optional[str]:
+        return _strip_optional(value)
+
+    @field_validator("birth_date")
+    @classmethod
+    def reject_future_birth_date(cls, value: Optional[date]) -> Optional[date]:
+        if value is not None and value > date.today():
+            raise ValueError("must not be in the future")
+        return value
 
 
 class ChildRead(ChildBase):
@@ -97,6 +145,13 @@ class MeasurementCreate(BaseModel):
     height_cm: float = Field(..., gt=20, lt=150)
     weight_kg: float = Field(..., gt=1, lt=60)
 
+    @field_validator("measurement_date")
+    @classmethod
+    def reject_future_measurement_date(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("must not be in the future")
+        return value
+
 
 class MeasurementRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -143,29 +198,34 @@ class DashboardSummary(BaseModel):
 
 
 class ChatGrowthComparison(BaseModel):
-    tb_explanation: Optional[str] = None
-    bb_explanation: Optional[str] = None
-    overall_explanation: Optional[str] = None
-    warning: Optional[str] = None
+    tb_explanation: Optional[str] = Field(default=None, max_length=1000)
+    bb_explanation: Optional[str] = Field(default=None, max_length=1000)
+    overall_explanation: Optional[str] = Field(default=None, max_length=1000)
+    warning: Optional[str] = Field(default=None, max_length=1000)
 
 
 class ChatNutritionRecommendation(BaseModel):
-    description: Optional[str] = None
-    mpasi_phase: Optional[str] = None
-    food: List[str] = []
-    frequency: Optional[str] = None
-    supplements: Optional[str] = None
-    notes: Optional[str] = None
+    description: Optional[str] = Field(default=None, max_length=1000)
+    mpasi_phase: Optional[str] = Field(default=None, max_length=500)
+    food: List[str] = Field(default_factory=list, max_length=8)
+    frequency: Optional[str] = Field(default=None, max_length=500)
+    supplements: Optional[str] = Field(default=None, max_length=500)
+    notes: Optional[str] = Field(default=None, max_length=1000)
+
+    @field_validator("food")
+    @classmethod
+    def limit_food_item_lengths(cls, value: List[str]) -> List[str]:
+        return [_strip_required(item)[:300] for item in value]
 
 
 class ChatChildContext(BaseModel):
     age_month: Optional[int] = Field(default=None, ge=0, le=60)
-    gender: Optional[str] = None
+    gender: Optional[Gender] = None
     height_cm: Optional[float] = Field(default=None, gt=20, lt=150)
     weight_kg: Optional[float] = Field(default=None, gt=1, lt=60)
-    nutrition_status: Optional[str] = None
-    risk_level: Optional[str] = None
-    recommendation: Optional[str] = None
+    nutrition_status: Optional[NutritionStatus] = None
+    risk_level: Optional[RiskLevel] = None
+    recommendation: Optional[str] = Field(default=None, max_length=1000)
     comparison: Optional[ChatGrowthComparison] = None
     nutrition_recommendation: Optional[ChatNutritionRecommendation] = None
 
@@ -173,14 +233,19 @@ class ChatChildContext(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=500)
     child_context: Optional[ChatChildContext] = None
-    child_id: Optional[int] = None
+    child_id: Optional[int] = Field(default=None, gt=0)
+
+    @field_validator("message", mode="before")
+    @classmethod
+    def strip_message(cls, value: str) -> str:
+        return _strip_required(value)
 
 
 class ChatResponse(BaseModel):
     reply: str
     source: str
     safety_level: str
-    suggested_actions: List[str] = []
+    suggested_actions: List[str] = Field(default_factory=list)
 
 
 class ModelInfoResponse(BaseModel):
@@ -202,24 +267,40 @@ class LoginRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=160)
     password: str = Field(..., min_length=1, max_length=160)
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return _strip_required(value).lower()
+
 
 class LoginResponse(BaseModel):
     token: str
+    expires_at: int
     email: str
     name: str
     role: UserRole
 
 
 class ConsultationCreate(BaseModel):
-    child_id: int
+    child_id: int = Field(..., gt=0)
     subject: str = Field(..., min_length=3, max_length=160)
     message: str = Field(..., min_length=5, max_length=2000)
-    latest_measurement_id: Optional[int] = None
+    latest_measurement_id: Optional[int] = Field(default=None, gt=0)
+
+    @field_validator("subject", "message", mode="before")
+    @classmethod
+    def strip_text_fields(cls, value: str) -> str:
+        return _strip_required(value)
 
 
 class ConsultationReply(BaseModel):
     reply: str = Field(..., min_length=3, max_length=2000)
     status: ConsultationStatus = "answered"
+
+    @field_validator("reply", mode="before")
+    @classmethod
+    def strip_reply(cls, value: str) -> str:
+        return _strip_required(value)
 
 
 class ConsultationStatusUpdate(BaseModel):

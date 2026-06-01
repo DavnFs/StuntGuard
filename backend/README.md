@@ -86,6 +86,8 @@ Demo login:
 - `parent@demo.com` / `password`
 - `admin@demo.com` / `password`
 
+Login demo mengeluarkan bearer token bertanda tangan dengan masa berlaku terbatas. Untuk deployment di luar laptop lokal, isi `STUNTGUARD_SECRET_KEY`, ubah `DEMO_PARENT_PASSWORD` dan `DEMO_ADMIN_PASSWORD`, batasi `CORS_ALLOWED_ORIGINS`, serta aktifkan `TRUST_PROXY_HEADERS` hanya di belakang reverse proxy tepercaya.
+
 ## Disclaimer
 
 Aplikasi ini untuk demo akademik, skrining awal, dan pendukung keputusan. Hasil prediksi bukan diagnosis medis dan harus dikonsultasikan dengan tenaga kesehatan atau Puskesmas.

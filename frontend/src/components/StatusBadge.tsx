@@ -3,15 +3,15 @@ import type { NutritionStatus, RiskLevel } from "../types";
 const statusStyles: Record<NutritionStatus, string> = {
   "severely stunted": "bg-red-100 text-red-700 ring-red-200",
   stunted: "bg-amber-100 text-amber-700 ring-amber-200",
-  normal: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-  tall: "bg-sky-100 text-sky-700 ring-sky-200",
+  normal: "bg-care-100 text-care-700 ring-care-200",
+  tall: "bg-brand-100 text-brand-700 ring-brand-200",
 };
 
 const riskStyles: Record<RiskLevel, string> = {
   high: "bg-red-100 text-red-700 ring-red-200",
   medium: "bg-amber-100 text-amber-700 ring-amber-200",
-  low: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-  monitor: "bg-sky-100 text-sky-700 ring-sky-200",
+  low: "bg-care-100 text-care-700 ring-care-200",
+  monitor: "bg-brand-100 text-brand-700 ring-brand-200",
 };
 
 export const statusLabel: Record<NutritionStatus, string> = {
