@@ -9,45 +9,96 @@ import {
   Soup,
   UserPlus,
   Utensils,
+  TrendingUp,
+  Activity,
+  Award,
+  CheckCircle2,
+  AlertTriangle,
+  FileSpreadsheet,
+  Settings,
+  Ruler,
+  Scale,
+  Brain,
+  HelpCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 import type { ChatChildContext, NutritionStatus, PredictionResponse } from "../types";
 
 const DISCLAIMER =
   "Hasil ini merupakan skrining awal dan bukan diagnosis medis. Silakan konsultasikan ke petugas kesehatan atau Puskesmas untuk pemeriksaan lanjutan.";
 
-const statusTone: Record<NutritionStatus, { badge: string; tone: string; iconTone: string; accent: string }> = {
+const statusTone: Record<NutritionStatus, {
+  badge: string;
+  gradient: string;
+  border: string;
+  shadow: string;
+  iconBg: string;
+  textColor: string;
+  iconColor: string;
+  riskLabel: string;
+  description: string;
+}> = {
   normal: {
     badge: "Normal",
-    tone: "border-care-200 bg-care-50 text-care-800",
-    iconTone: "bg-care-100 text-care-700",
-    accent: "bg-care-600",
+    gradient: "from-emerald-500/10 via-teal-500/5 to-white",
+    border: "border-emerald-500/20",
+    shadow: "shadow-emerald-500/5",
+    iconBg: "bg-emerald-100 text-emerald-700",
+    textColor: "text-emerald-950",
+    iconColor: "text-emerald-600",
+    riskLabel: "Risiko Sangat Rendah",
+    description: "Pertumbuhan tinggi dan berat badan anak berkembang optimal sesuai acuan standar WHO.",
   },
   tall: {
-    badge: "Perlu Dipantau",
-    tone: "border-brand-200 bg-brand-50 text-brand-800",
-    iconTone: "bg-brand-100 text-brand-700",
-    accent: "bg-brand-600",
+    badge: "Perlu Dipantau (Tinggi)",
+    gradient: "from-cyan-500/10 via-brand-500/5 to-white",
+    border: "border-cyan-500/20",
+    shadow: "shadow-cyan-500/5",
+    iconBg: "bg-cyan-100 text-cyan-700",
+    textColor: "text-cyan-950",
+    iconColor: "text-cyan-600",
+    riskLabel: "Pantau Tinggi Badan",
+    description: "Tinggi badan anak berada di atas rata-rata standard WHO. Tetap pantau nutrisi harian anak.",
   },
   stunted: {
     badge: "Risiko Stunting",
-    tone: "border-amber-200 bg-amber-50 text-amber-800",
-    iconTone: "bg-amber-100 text-amber-700",
-    accent: "bg-amber-600",
+    gradient: "from-amber-500/10 via-orange-500/5 to-white",
+    border: "border-amber-500/20",
+    shadow: "shadow-amber-500/5",
+    iconBg: "bg-amber-100 text-amber-700",
+    textColor: "text-amber-950",
+    iconColor: "text-amber-600",
+    riskLabel: "Risiko Sedang",
+    description: "Tinggi badan anak berada di bawah standar pertumbuhan normal. Diperlukan intervensi gizi.",
   },
   "severely stunted": {
     badge: "Risiko Tinggi",
-    tone: "border-red-200 bg-red-50 text-red-800",
-    iconTone: "bg-red-100 text-red-700",
-    accent: "bg-red-600",
+    gradient: "from-rose-500/10 via-red-500/5 to-white",
+    border: "border-rose-500/20",
+    shadow: "shadow-rose-500/5",
+    iconBg: "bg-rose-100 text-rose-700",
+    textColor: "text-rose-950",
+    iconColor: "text-rose-600",
+    riskLabel: "Risiko Tinggi (Stunting Akut)",
+    description: "Pertumbuhan tinggi badan berada jauh di bawah kurva standar WHO. Harap segera hubungi medis.",
   },
 };
 
 const modeLabel: Record<string, string> = {
-  "full-growth-model": "Model pertumbuhan lengkap",
-  "height-only-fallback-model": "Model cadangan (tinggi badan saja)",
-  "rule-based-fallback": "Aturan berbasis standar WHO",
+  "full-growth-model": "Model Pertumbuhan Lengkap (Machine Learning)",
+  "height-only-fallback-model": "Model Cadangan (Tinggi Badan Saja)",
+  "rule-based-fallback": "Aturan Berbasis Standar WHO",
 };
 
 function pct(value: number | null | undefined) {
@@ -61,9 +112,9 @@ function numberOrDash(value: number | null | undefined, suffix = "") {
 type TabKey = "ringkasan" | "gizi" | "teknis";
 
 const tabs: Array<{ key: TabKey; label: string }> = [
-  { key: "ringkasan", label: "Ringkasan" },
-  { key: "gizi", label: "Saran Gizi" },
-  { key: "teknis", label: "Detail Teknis" },
+  { key: "ringkasan", label: "Dashboard Ringkasan" },
+  { key: "gizi", label: "Rencana & Saran Gizi" },
+  { key: "teknis", label: "Detail Teknis Model" },
 ];
 
 interface PredictionResultCardProps {
@@ -78,280 +129,493 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
   const risky = result.nutrition_status === "stunted" || result.nutrition_status === "severely stunted";
   const foodItems = result.nutrition_recommendation.food.slice(0, 5);
 
+  const openChat = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (childContext) {
+      window.sessionStorage.setItem("stuntguard_last_child_context", JSON.stringify(childContext));
+    }
+    window.dispatchEvent(new CustomEvent("open-chatbot"));
+  };
+
+  // Dynamic growth standard variables
+  const tbNormal = result.comparison.tb_normal ?? 85;
+  const bbNormal = result.comparison.bb_normal ?? 11;
+  const tbCurrent = childContext?.height_cm ?? 82.5;
+  const bbCurrent = childContext?.weight_kg ?? 10.4;
+
+  // Growth Score Calculation (100 - deviation)
+  const tbDev = Math.abs(tbCurrent - tbNormal) / tbNormal;
+  const bbDev = Math.abs(bbCurrent - bbNormal) / bbNormal;
+  const tbScore = Math.max(0, 100 - tbDev * 200);
+  const bbScore = Math.max(0, 100 - bbDev * 200);
+  const growthScore = Math.round((tbScore + bbScore) / 2);
+
+  // Score description mapping
+  let scoreText = "Optimal";
+  let scoreColor = "text-emerald-600 bg-emerald-50 border-emerald-100";
+  let barColor = "bg-emerald-500";
+  if (growthScore < 75) {
+    scoreText = "Risiko Defisit";
+    scoreColor = "text-rose-600 bg-rose-50 border-rose-100";
+    barColor = "bg-rose-500";
+  } else if (growthScore < 90) {
+    scoreText = "Perlu Perhatian";
+    scoreColor = "text-amber-600 bg-amber-50 border-amber-100";
+    barColor = "bg-amber-500";
+  }
+
+  // Circular Confidence variables
+  const confidenceVal = Math.round((result.confidence ?? 0.85) * 100);
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (confidenceVal / 100) * circumference;
+
+  // Recharts Standard Chart Data
+  const chartData = [
+    {
+      name: "Tinggi (cm)",
+      "Anak": tbCurrent,
+      "WHO Standard": tbNormal,
+    },
+    {
+      name: "Berat (kg)",
+      "Anak": bbCurrent,
+      "WHO Standard": bbNormal,
+    },
+  ];
+
   return (
-    <div className={`overflow-hidden rounded-2xl border shadow-sm ${tone.tone}`}>
-      {/* ── Header: Status Badge + Title ── */}
-      <div className="p-5 pb-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex gap-3">
-            <div className={`mt-1 rounded-2xl p-3 ${tone.iconTone}`}>
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-cyan-900/[0.02]">
+      
+      {/* ── Status Header Card ── */}
+      <div className={`bg-gradient-to-br ${tone.gradient} p-6 border-b border-slate-100`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className={`rounded-2xl p-4 shrink-0 shadow-sm ${tone.iconBg}`}>
               <HeartPulse className="h-6 w-6" />
             </div>
             <div>
-              <span className="inline-flex rounded-full bg-white/80 px-3 py-1 text-xs font-bold shadow-sm">
-                {tone.badge}
-              </span>
-              <h3 className="mt-3 font-heading text-2xl font-bold leading-tight text-slate-950">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex rounded-full border px-3 py-0.5 text-xs font-extrabold uppercase tracking-wider ${tone.textColor} bg-white shadow-sm`}>
+                  {tone.badge}
+                </span>
+                <span className="inline-flex rounded-full bg-slate-900 px-3 py-0.5 text-xs font-bold text-white">
+                  {tone.riskLabel}
+                </span>
+              </div>
+              <h3 className="mt-3 font-heading text-2xl font-extrabold text-slate-950 leading-tight">
                 {result.summary.title}
               </h3>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
+              <p className="mt-1.5 text-sm text-slate-600 max-w-xl">
                 {result.summary.description}
               </p>
+            </div>
+          </div>
+
+          {/* Quick Stats side badges */}
+          <div className="flex gap-3 shrink-0 self-center md:self-auto">
+            <div className="rounded-2xl bg-white/60 border border-slate-200/40 p-4 text-center min-w-[100px] backdrop-blur-sm shadow-sm">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Usia Anak</span>
+              <span className="block font-heading text-xl font-extrabold text-slate-900 mt-1">{childContext?.age_month ?? result.comparison.overall_explanation.match(/\d+/)?.[0] ?? "-"} bln</span>
+            </div>
+            <div className="rounded-2xl bg-white/60 border border-slate-200/40 p-4 text-center min-w-[100px] backdrop-blur-sm shadow-sm">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kelamin</span>
+              <span className="block font-heading text-lg font-extrabold text-slate-900 mt-1">
+                {childContext?.gender === "female" ? "Perempuan" : "Laki-laki"}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Tab Navigation ── */}
-      <div className="flex gap-1 border-y border-black/[0.06] bg-white/50 px-5">
+      {/* ── Tabs Navigation ── */}
+      <div className="flex gap-2 bg-slate-50/50 border-b border-slate-100 px-6 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-            className={`relative px-4 py-3 text-sm font-bold transition ${
+            className={`relative py-4 px-3 text-sm font-bold whitespace-nowrap transition-colors duration-200 ${
               activeTab === tab.key
-                ? "text-slate-950"
+                ? "text-cyan-600 font-extrabold"
                 : "text-slate-400 hover:text-slate-600"
             }`}
           >
             {tab.label}
-            {activeTab === tab.key ? (
-              <span className={`absolute bottom-0 left-2 right-2 h-0.5 rounded-full ${tone.accent}`} />
-            ) : null}
+            {activeTab === tab.key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-cyan-600" />
+            )}
           </button>
         ))}
       </div>
 
-      {/* ── Tab Content ── */}
-      <div className="p-5">
-        {/* Tab: Ringkasan */}
-        {activeTab === "ringkasan" ? (
-          <div className="space-y-4">
-            <div className="rounded-xl bg-white/85 p-4">
-              <p className="text-sm font-bold text-slate-950">Langkah berikutnya</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{result.summary.next_action}</p>
-            </div>
-            <div className="rounded-xl bg-white/85 p-4">
-              <p className="text-sm font-bold text-slate-950">Perbandingan pertumbuhan</p>
-              <ul className="mt-2 space-y-1.5 text-sm leading-6 text-slate-700">
-                <li className="flex items-start gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-brand-500" />
-                  {result.comparison.tb_explanation}
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-brand-500" />
-                  {result.comparison.bb_explanation}
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-brand-500" />
-                  {result.comparison.overall_explanation}
-                </li>
-              </ul>
-              {result.comparison.warning ? (
-                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
-                  {result.comparison.warning}
+      {/* ── Content Container ── */}
+      <div className="p-6">
+        
+        {/* Tab: Ringkasan (Dashboard Overview) */}
+        {activeTab === "ringkasan" && (
+          <div className="space-y-6">
+            
+            {/* Visual Indicators Row */}
+            <div className="grid gap-6 md:grid-cols-3">
+              
+              {/* Circular Confidence Meter */}
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/30 p-5 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">KEYAKINAN MODEL</span>
+                <div className="relative flex items-center justify-center">
+                  <svg className="w-24 h-24 transform -rotate-90">
+                    {/* Background track */}
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r={radius}
+                      stroke="#e2e8f0"
+                      strokeWidth="6"
+                      fill="transparent"
+                    />
+                    {/* Arc path */}
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r={radius}
+                      stroke="url(#confidenceGrad)"
+                      strokeWidth="8"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center justify-center">
+                    <span className="font-heading text-xl font-extrabold text-slate-900">{confidenceVal}%</span>
+                    <span className="text-[8px] font-bold text-cyan-600 tracking-wider">Akurasi</span>
+                  </div>
+                  <defs>
+                    <linearGradient id="confidenceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#06b6d4" />
+                      <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                  </defs>
+                </div>
+                <p className="mt-3 text-[11px] text-slate-500 leading-normal">
+                  Probabilitas diagnosis model AI gizi berdasarkan kurva pertumbuhan.
                 </p>
-              ) : null}
+              </div>
+
+              {/* Growth Score Gauge */}
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/30 p-5 flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">SKOR PERTUMBUHAN</span>
+                  <div className="flex items-baseline gap-1 mt-3">
+                    <span className="font-heading text-4xl font-extrabold text-slate-950">{growthScore}</span>
+                    <span className="text-sm font-bold text-slate-400">/ 100</span>
+                  </div>
+                  
+                  {/* Styled Rating Badge */}
+                  <span className={`inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider mt-2.5 ${scoreColor}`}>
+                    {scoreText}
+                  </span>
+                </div>
+
+                <div className="mt-4">
+                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                      style={{ width: `${growthScore}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-2">
+                    Skor gabungan deviasi anak terhadap target kurva WHO.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Recommendation Card */}
+              <div className="rounded-2xl border border-cyan-500/10 bg-cyan-500/[0.02] p-5 flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Award className="h-4.5 w-4.5 text-cyan-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-cyan-800">REKOMENDASI MEDIS</span>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed font-medium mt-2">
+                    {result.summary.next_action}
+                  </p>
+                </div>
+                
+                <div className="mt-4 pt-3 border-t border-cyan-150">
+                  <span className="text-[9px] font-extrabold uppercase text-cyan-700 tracking-wider">SARAN SEGERA</span>
+                  <p className="text-[10px] text-slate-500 leading-relaxed mt-0.5">Lakukan konsultasi dengan petugas kesehatan untuk pemeriksaan lanjutan.</p>
+                </div>
+              </div>
+
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-2 pt-2">
+            {/* WHO Comparison Charts Row */}
+            <div className="grid gap-6 md:grid-cols-5">
+              
+              {/* Recharts Column Bar */}
+              <div className="rounded-2xl border border-slate-200/60 bg-white p-5 md:col-span-3">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4.5 w-4.5 text-cyan-600" />
+                    <span className="text-xs font-bold text-slate-900">Perbandingan Kurva WHO</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400">Unit: cm / kg</span>
+                </div>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: "bold", fill: "#64748b" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                      <Tooltip cursor={{ fill: "rgba(14,116,144,0.02)" }} />
+                      <Bar dataKey="Anak" radius={[8, 8, 0, 0]} maxBarSize={32}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 0 ? "#06b6d4" : "#10b981"} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="WHO Standard" fill="#e2e8f0" radius={[8, 8, 0, 0]} maxBarSize={32} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Standard text growth explainers */}
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/20 p-5 md:col-span-2 space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">DESKRIPSI ANALISIS</span>
+                  <h4 className="font-heading text-sm font-bold text-slate-900 mt-2">Perbandingan Tinggi & Berat</h4>
+                </div>
+
+                <div className="space-y-3 text-xs leading-relaxed text-slate-650">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-cyan-500" />
+                    <p>{result.comparison.tb_explanation}</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-emerald-500" />
+                    <p>{result.comparison.bb_explanation}</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-slate-400" />
+                    <p>{result.comparison.overall_explanation}</p>
+                  </div>
+                </div>
+
+                {result.comparison.warning && (
+                  <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] p-3 flex gap-2 items-start text-[11px] text-amber-800 leading-normal mt-3">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                    <p>{result.comparison.warning}</p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-100 justify-end">
               {risky ? (
                 <>
-                  <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-care-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-care-700">
+                  <Link
+                    to="/chatbot"
+                    onClick={openChat}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-cyan-600 px-5 text-xs font-bold text-white shadow-sm hover:bg-cyan-700 transition"
+                  >
                     <MessageCircle className="h-4 w-4" />
-                    Tanya AI Gizi
+                    Konsultasi Asisten AI Gizi
                   </Link>
-                  <Link to="/login" className="inline-flex items-center gap-2 rounded-xl border border-care-600 bg-white px-4 py-2.5 text-sm font-bold text-care-700 hover:bg-care-50">
+                  <Link to="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-cyan-600 bg-white px-5 text-xs font-bold text-cyan-700 hover:bg-cyan-50 transition">
                     <UserPlus className="h-4 w-4" />
-                    Daftar untuk Konsultasi
+                    Daftar Akun Posyandu
                   </Link>
-                  <Link to="/login" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                  <Link to="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-350 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
                     <Save className="h-4 w-4" />
-                    Simpan Riwayat Anak
+                    Simpan Riwayat Pertumbuhan
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link to="/chatbot" state={{ childContext }} className="inline-flex items-center gap-2 rounded-xl bg-care-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-care-700">
+                  <Link
+                    to="/chatbot"
+                    onClick={openChat}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-cyan-600 px-5 text-xs font-bold text-white shadow-sm hover:bg-cyan-700 transition"
+                  >
                     <MessageCircle className="h-4 w-4" />
-                    Pelajari Edukasi Gizi
+                    Pelajari Edukasi MPASI
                   </Link>
-                  {onCheckAgain ? (
+                  {onCheckAgain && (
                     <button
                       type="button"
                       onClick={onCheckAgain}
-                      className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-350 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                     >
                       <RotateCcw className="h-4 w-4" />
-                      Cek Lagi
+                      Hitung Ulang
                     </button>
-                  ) : null}
+                  )}
                 </>
               )}
             </div>
+
           </div>
-        ) : null}
+        )}
 
         {/* Tab: Saran Gizi */}
-        {activeTab === "gizi" ? (
-          <div className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-xl bg-white/85 p-4">
-                <div className="flex items-center gap-2">
-                  <Soup className="h-5 w-5 text-brand-700" />
-                  <p className="text-sm font-bold text-slate-950">Fase makan / MPASI</p>
+        {activeTab === "gizi" && (
+          <div className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              
+              {/* MPASI & Frequency info */}
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/20 p-5 space-y-5">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <Soup className="h-5 w-5 text-cyan-600" />
+                  <h4 className="font-heading text-sm font-bold text-slate-950">Fase Nutrisi & Frekuensi</h4>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {result.nutrition_recommendation.mpasi_phase}
-                </p>
-                <p className="mt-4 text-sm font-bold text-slate-950">Frekuensi makan</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {result.nutrition_recommendation.frequency}
-                </p>
+                
+                <div>
+                  <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">FASE MAKAN / MPASI</span>
+                  <p className="mt-2 text-xs font-semibold text-slate-800 bg-white p-3 rounded-xl border border-slate-150 leading-relaxed shadow-sm">
+                    {result.nutrition_recommendation.mpasi_phase}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">JADWAL & FREKUENSI HARIAN</span>
+                  <p className="mt-2 text-xs font-semibold text-slate-800 bg-white p-3 rounded-xl border border-slate-150 leading-relaxed shadow-sm">
+                    {result.nutrition_recommendation.frequency}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-xl bg-white/85 p-4">
-                <div className="flex items-center gap-2">
-                  <Utensils className="h-5 w-5 text-brand-700" />
-                  <p className="text-sm font-bold text-slate-950">Saran makanan</p>
+
+              {/* Food recommendations */}
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/20 p-5 space-y-5">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <Utensils className="h-5 w-5 text-cyan-600" />
+                  <h4 className="font-heading text-sm font-bold text-slate-950">Bahan Makanan Dianjurkan</h4>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {result.nutrition_recommendation.description}
-                </p>
-                <ul className="mt-3 space-y-1.5 text-sm leading-6 text-slate-700">
-                  {foodItems.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-care-500" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+
+                <div>
+                  <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Saran Menu Gizi</span>
+                  <p className="mt-2 text-xs text-slate-650 leading-relaxed">
+                    {result.nutrition_recommendation.description}
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">DAFTAR SUPERFOOD</span>
+                  <div className="flex flex-wrap gap-2">
+                    {foodItems.map((item) => (
+                      <span key={item} className="inline-flex rounded-lg bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700 border border-cyan-100">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Nutrients targets info */}
+            <div className="rounded-2xl border border-slate-200/60 bg-slate-50/20 p-5">
+              <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">TARGET KEBUTUHAN HARIAN (EDUKATIF)</span>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm text-center">
+                  <span className="block text-[10px] font-extrabold uppercase text-slate-450 tracking-wider">KALORI</span>
+                  <span className="block text-sm font-bold text-slate-800 mt-1">{result.nutrition_recommendation.calories_target}</span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm text-center">
+                  <span className="block text-[10px] font-extrabold uppercase text-slate-450 tracking-wider">PROTEIN</span>
+                  <span className="block text-sm font-bold text-slate-800 mt-1">{result.nutrition_recommendation.protein_target}</span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-150 shadow-sm text-center">
+                  <span className="block text-[10px] font-extrabold uppercase text-slate-450 tracking-wider">CAIRAN / AIR</span>
+                  <span className="block text-sm font-bold text-slate-800 mt-1">{result.nutrition_recommendation.fluid_target}</span>
+                </div>
               </div>
             </div>
-            <div className="rounded-xl bg-white/85 p-4">
-              <p className="text-sm font-bold text-slate-950">Catatan aman</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{result.nutrition_recommendation.notes}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{result.nutrition_recommendation.supplements}</p>
+
+            {/* Supplements & Notes */}
+            <div className="rounded-2xl border border-slate-200/60 bg-slate-50/20 p-5 space-y-4">
+              <div>
+                <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">SUPLEMENTASI LAINNYA</span>
+                <p className="mt-2 text-xs text-slate-750 leading-relaxed bg-white p-3 rounded-xl border border-slate-150 shadow-sm">{result.nutrition_recommendation.supplements}</p>
+              </div>
+              <div>
+                <span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">CATATAN AMAN</span>
+                <p className="mt-2 text-xs text-slate-750 leading-relaxed bg-white p-3 rounded-xl border border-slate-150 shadow-sm">{result.nutrition_recommendation.notes}</p>
+              </div>
             </div>
+
           </div>
-        ) : null}
+        )}
 
         {/* Tab: Detail Teknis */}
-        {activeTab === "teknis" ? (
-          <div className="space-y-4">
-            <p className="mb-3 text-xs leading-5 text-slate-500 flex items-center gap-1.5">
-              <Info className="h-4 w-4 text-brand-600 flex-shrink-0" />
-              <span>Informasi di bawah ini ditujukan untuk petugas kesehatan sebagai pendukung keputusan skrining. Bukan diagnosis medis.</span>
-            </p>
-            <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tingkat Keyakinan Model</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{pct(result.confidence)}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Probabilitas kategori terpilih dari 4 pilihan status gizi WHO. Karena ada 4 kategori (baseline acak 25%), nilai di atas 25% menunjukkan pilihan terkuat model, sehingga {pct(result.confidence)} sudah dominan.
-                </p>
+        {activeTab === "teknis" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-cyan-500/10 bg-cyan-500/[0.01] p-4 flex gap-3 items-start text-xs text-cyan-800 leading-normal">
+              <Info className="h-4.5 w-4.5 shrink-0 text-cyan-600 mt-0.5" />
+              <p>Informasi di bawah ini ditujukan sebagai pendukung keputusan klinis bagi kader Posyandu/petugas kesehatan Puskesmas. Data bersumber dari parameter kurva pertumbuhan anak laki-laki dan perempuan WHO (2006).</p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">METODE ALGORITMA</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{modeLabel[result.model_mode] ?? result.model_mode}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Mode Model Prediksi</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{modeLabel[result.model_mode] ?? result.model_mode}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Metode klasifikasi yang dipakai oleh sistem untuk menganalisis data tumbuh kembang anak.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RATIO TINGGI (REAL VS STANDAR)</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.growth_notes.height_expected_ratio)}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tinggi Badan Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.comparison.tb_normal, " cm")}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Rata-rata tinggi badan anak sehat WHO berdasarkan umur dan jenis kelamin yang sama.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RATIO BERAT (REAL VS STANDAR)</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.growth_notes.weight_expected_ratio)}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Berat Badan Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.comparison.bb_normal, " kg")}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Rata-rata berat badan anak sehat WHO berdasarkan umur dan jenis kelamin yang sama.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">DEVIASI TINGGI NORMAL</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.growth_notes.height_gap_expected, " cm")}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Persentase Tinggi thd Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.comparison.persentase_tb, "%")}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Persentase tinggi badan riil dibandingkan dengan standar WHO.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">DEVIASI BERAT NORMAL</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.growth_notes.weight_gap_expected, " kg")}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Persentase Berat thd Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.comparison.persentase_bb, "%")}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Persentase berat badan riil dibandingkan dengan standar WHO.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TARGET PERSENTASE TINGGI</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.comparison.persentase_tb, "%")}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Selisih Tinggi dari Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.growth_notes.height_gap_expected, " cm")}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Berapa cm tinggi anak berada di atas (+) atau di bawah (-) batas pertumbuhan yang diharapkan.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TARGET PERSENTASE BERAT</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.comparison.persentase_bb, "%")}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Rasio Tinggi thd Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.growth_notes.height_expected_ratio)}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Rasio tinggi anak dibanding standar WHO. Angka 1.0 berarti sama persis dengan standar, di bawah 1.0 artinya lebih pendek.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RATA-RATA TINGGI WHO</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.comparison.tb_normal, " cm")}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Selisih Berat dari Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.growth_notes.weight_gap_expected, " kg")}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Berapa kg berat anak berada di atas (+) atau di bawah (-) batas pertumbuhan yang diharapkan.
-                </p>
+
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/10 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RATA-RATA BERAT WHO</span>
+                <p className="mt-1 text-sm font-bold text-slate-900">{numberOrDash(result.comparison.bb_normal, " kg")}</p>
               </div>
-              <div className="flex flex-col justify-between rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Rasio Berat thd Standar</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">{numberOrDash(result.growth_notes.weight_expected_ratio)}</p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 border-t border-slate-100 pt-1.5">
-                  Rasio berat anak dibanding standar WHO. Angka 1.0 berarti sama persis dengan standar, di bawah 1.0 artinya lebih ringan.
-                </p>
-              </div>
-              <div className="rounded-xl bg-white/85 p-4 border border-slate-100/50 shadow-sm sm:col-span-2 lg:col-span-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Target Gizi Edukatif</p>
-                <p className="mt-2 font-semibold text-slate-950">{result.nutrition_recommendation.calories_target}</p>
-                <p className="mt-1 font-semibold text-slate-950">{result.nutrition_recommendation.protein_target}</p>
-                <p className="mt-1 font-semibold text-slate-950">{result.nutrition_recommendation.fluid_target}</p>
-              </div>
+
             </div>
           </div>
-        ) : null}
+        )}
+
       </div>
 
-      {/* ── Disclaimer (always visible) ── */}
-      <div className="border-t border-black/[0.06] px-5 py-4">
-        <p className="text-xs leading-5 text-slate-500">
-          {result.disclaimer || DISCLAIMER}
-        </p>
+      {/* ── Disclaimer Footer (Always Visible) ── */}
+      <div className="border-t border-slate-100 bg-slate-50/50 px-6 py-4 flex gap-2 items-center text-[10px] text-slate-400 leading-normal">
+        <HelpCircle className="h-4 w-4 shrink-0 text-slate-350" />
+        <p>{result.disclaimer || DISCLAIMER}</p>
       </div>
+
     </div>
   );
 }

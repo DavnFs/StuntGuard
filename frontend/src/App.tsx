@@ -2,6 +2,8 @@ import { lazy, PropsWithChildren, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import Layout from "./components/Layout";
+import { FullScreenLoader, TopLoadingBar } from "./components/Loader";
+import ChatbotPopup from "./components/ChatbotPopup";
 import { getCurrentUser } from "./services/auth";
 import type { UserRole } from "./types";
 
@@ -32,7 +34,9 @@ function RequireRole({ children, role }: PropsWithChildren<{ role: UserRole }>) 
 
 export default function App() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-slate-500">Memuat halaman...</div>}>
+    <Suspense fallback={<FullScreenLoader />}>
+      <TopLoadingBar />
+      <ChatbotPopup />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />

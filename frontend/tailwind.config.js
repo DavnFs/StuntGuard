@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Noto Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Outfit", "Noto Sans", "ui-sans-serif", "system-ui", "sans-serif"],
         heading: ["Figtree", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
