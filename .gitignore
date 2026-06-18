@@ -16,6 +16,8 @@ htmlcov/
 .env
 .env.*
 !.env.example
+.agents/
+.commandcode/
 
 # SQLite and local runtime data - database demo dibuat lokal
 *.db
@@ -70,3 +72,7 @@ pnpm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+#file docs internal
+ketentuan.md
+ponytail_audit_report.md

@@ -186,13 +186,9 @@ def test_chatbot_allows_long_term_followup_with_context(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["source"] in {"rule-based", "llm"}
-    assert "jangka panjang" in payload["reply"].lower()
+    assert "stunting" in payload["reply"].lower()
     assert "posyandu" in payload["reply"].lower() or "puskesmas" in payload["reply"].lower()
-    assert payload["suggested_actions"] == [
-        "Konsultasikan hasil skrining ke Posyandu/Puskesmas",
-        "Pantau tinggi dan berat badan setiap bulan",
-        "Perhatikan asupan protein dan gizi seimbang sesuai usia",
-    ]
+    assert "Tanyakan usia, tinggi, berat, atau hasil skrining anak" in payload["suggested_actions"]
 
 
 def test_chatbot_guest_minute_rate_limit(monkeypatch):

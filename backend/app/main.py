@@ -3,7 +3,6 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from sqlalchemy import inspect, text
 
 from app import config as _config  # noqa: F401 - loads .env before app setup
 from app.database import Base, engine
@@ -18,25 +17,8 @@ def cors_allowed_origins() -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-def apply_lightweight_migrations() -> None:
-    inspector = inspect(engine)
-    if "measurements" not in inspector.get_table_names():
-        return
-
-    measurement_columns = {column["name"] for column in inspector.get_columns("measurements")}
-    if "weight_kg" not in measurement_columns:
-        with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE measurements ADD COLUMN weight_kg FLOAT"))
-    if "model_mode" not in measurement_columns:
-        with engine.begin() as connection:
-            connection.execute(
-                text("ALTER TABLE measurements ADD COLUMN model_mode VARCHAR(40) DEFAULT 'rule-based-fallback' NOT NULL")
-            )
-
-
 def create_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
-    apply_lightweight_migrations()
 
     app = FastAPI(
         title="StuntGuard API",
