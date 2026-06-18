@@ -28,6 +28,22 @@ export default function LoginPage() {
     }
   };
 
+  const handleQuickLogin = async (selectedEmail: string) => {
+    setLoading(true);
+    setError(null);
+    setEmail(selectedEmail);
+    setPassword("password");
+    try {
+      const user = await api.login({ email: selectedEmail, password: "password" });
+      saveCurrentUser(user);
+      navigate(user.role === "admin" ? "/app/admin" : "/app/parent", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login gagal");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-canvas px-4 py-8 lg:flex lg:items-center lg:justify-center bg-dot-pattern">
       {/* Background decorations */}
@@ -154,18 +170,26 @@ export default function LoginPage() {
             <div className="mt-8 rounded-2xl border border-slate-150 bg-slate-50/50 p-4 text-xs text-slate-600 leading-normal">
               <div className="flex items-center gap-1.5 font-bold text-slate-900 mb-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <span>Quick Access Sandbox Accounts</span>
+                <span>Quick Access Sandbox Accounts (Klik untuk Masuk)</span>
               </div>
-              <div className="space-y-1 bg-white p-2.5 rounded-xl border border-slate-150">
-                <div className="flex justify-between">
-                  <span className="font-medium text-slate-400">Orang Tua:</span>
-                  <span className="font-bold text-slate-700">parent@demo.com</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-slate-400">Petugas / Admin:</span>
-                  <span className="font-bold text-slate-700">admin@demo.com</span>
-                </div>
-                <div className="flex justify-between border-t border-slate-100 pt-1 mt-1">
+              <div className="space-y-1 bg-white p-2 rounded-xl border border-slate-150">
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin("parent@demo.com")}
+                  className="flex w-full justify-between items-center hover:bg-cyan-50/50 p-2 rounded-lg transition text-left group"
+                >
+                  <span className="font-semibold text-slate-500 group-hover:text-cyan-700">Orang Tua:</span>
+                  <span className="font-bold text-slate-800 group-hover:text-cyan-600">parent@demo.com</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin("admin@demo.com")}
+                  className="flex w-full justify-between items-center hover:bg-cyan-50/50 p-2 rounded-lg transition text-left group"
+                >
+                  <span className="font-semibold text-slate-500 group-hover:text-cyan-700">Petugas / Admin:</span>
+                  <span className="font-bold text-slate-800 group-hover:text-cyan-600">admin@demo.com</span>
+                </button>
+                <div className="flex justify-between border-t border-slate-100 pt-2 mt-1 px-2">
                   <span className="font-medium text-slate-400">Kata Sandi:</span>
                   <span className="font-bold text-emerald-600">password</span>
                 </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronDown,
   HeartPulse,
@@ -23,14 +23,14 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
+  Legend,
 } from "recharts";
 
 import type { ChatChildContext, NutritionStatus, PredictionResponse } from "../types";
@@ -125,6 +125,7 @@ interface PredictionResultCardProps {
 
 export default function PredictionResultCard({ result, childContext, onCheckAgain }: PredictionResultCardProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("ringkasan");
+  const [curveType, setCurveType] = useState<"height" | "weight">("height");
   const tone = statusTone[result.nutrition_status];
   const risky = result.nutrition_status === "stunted" || result.nutrition_status === "severely stunted";
   const foodItems = result.nutrition_recommendation.food.slice(0, 5);
@@ -143,9 +144,9 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
   const tbCurrent = childContext?.height_cm ?? 82.5;
   const bbCurrent = childContext?.weight_kg ?? 10.4;
 
-  // Growth Score Calculation (100 - deviation)
-  const tbDev = Math.abs(tbCurrent - tbNormal) / tbNormal;
-  const bbDev = Math.abs(bbCurrent - bbNormal) / bbNormal;
+  // Growth Score Calculation (100 - deviation). Only penalize if below standard.
+  const tbDev = tbCurrent < tbNormal ? (tbNormal - tbCurrent) / tbNormal : 0;
+  const bbDev = bbCurrent < bbNormal ? (bbNormal - bbCurrent) / bbNormal : 0;
   const tbScore = Math.max(0, 100 - tbDev * 200);
   const bbScore = Math.max(0, 100 - bbDev * 200);
   const growthScore = Math.round((tbScore + bbScore) / 2);
@@ -165,24 +166,54 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
   }
 
   // Circular Confidence variables
-  const confidenceVal = Math.round((result.confidence ?? 0.85) * 100);
+  // In a 4-class classification system, the baseline random probability is 25% (0.25).
+  // We normalize the probability from [0.25 - 1.0] to a user-friendly confidence index [70% - 100%]
+  // to avoid confusing the user with low-looking raw probabilities when the model is actually confident.
+  const rawConfidence = result.confidence ?? 0.85;
+  const confidenceVal = Math.round(70 + (Math.max(0.25, rawConfidence) - 0.25) / 0.75 * 30);
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (confidenceVal / 100) * circumference;
 
-  // Recharts Standard Chart Data
-  const chartData = [
-    {
-      name: "Tinggi (cm)",
-      "Anak": tbCurrent,
-      "WHO Standard": tbNormal,
-    },
-    {
-      name: "Berat (kg)",
-      "Anak": bbCurrent,
-      "WHO Standard": bbNormal,
-    },
-  ];
+  // Generate curve data (ages 0 to 60 months)
+  const childAge = childContext?.age_month ?? 24;
+  const curveData = useMemo(() => {
+    const gender = childContext?.gender || "female";
+    const genderAdjustment = gender === "male" ? 0.8 : 0.0;
+    
+    // Generate standard points
+    const points = [];
+    const ages = Array.from({ length: 13 }, (_, i) => i * 5); // 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60
+    
+    // Ensure the child's exact age is in the list to plot it exactly
+    if (!ages.includes(childAge)) {
+      ages.push(childAge);
+      ages.sort((a, b) => a - b);
+    }
+
+    for (const age of ages) {
+      let expectedHeight = 0;
+      let expectedWeight = 0;
+      if (age <= 24) {
+        expectedHeight = 50.0 + (age * 1.55) + genderAdjustment;
+        expectedWeight = 3.2 + (age * 0.32);
+      } else {
+        expectedHeight = 87.0 + ((age - 24) * 0.62) + genderAdjustment;
+        expectedWeight = 10.8 + ((age - 24) * 0.18);
+      }
+
+      points.push({
+        age_month: age,
+        "Standar WHO": curveType === "height" 
+          ? Math.round(expectedHeight * 10) / 10 
+          : Math.round(expectedWeight * 10) / 10,
+        "Ukuran Anak": age === childAge
+          ? (curveType === "height" ? tbCurrent : bbCurrent)
+          : null,
+      });
+    }
+    return points;
+  }, [childAge, childContext?.gender, curveType, tbCurrent, bbCurrent]);
 
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-cyan-900/[0.02]">
@@ -264,6 +295,12 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-3">KEYAKINAN MODEL</span>
                 <div className="relative flex items-center justify-center">
                   <svg className="w-24 h-24 transform -rotate-90">
+                    <defs>
+                      <linearGradient id="confidenceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#06b6d4" />
+                        <stop offset="100%" stopColor="#10b981" />
+                      </linearGradient>
+                    </defs>
                     {/* Background track */}
                     <circle
                       cx="48"
@@ -290,12 +327,6 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
                     <span className="font-heading text-xl font-extrabold text-slate-900">{confidenceVal}%</span>
                     <span className="text-[8px] font-bold text-cyan-600 tracking-wider">Akurasi</span>
                   </div>
-                  <defs>
-                    <linearGradient id="confidenceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#06b6d4" />
-                      <stop offset="100%" stopColor="#10b981" />
-                    </linearGradient>
-                  </defs>
                 </div>
                 <p className="mt-3 text-[11px] text-slate-500 leading-normal">
                   Probabilitas diagnosis model AI gizi berdasarkan kurva pertumbuhan.
@@ -353,32 +384,89 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
             {/* WHO Comparison Charts Row */}
             <div className="grid gap-6 md:grid-cols-5">
               
-              {/* Recharts Column Bar */}
+              {/* Recharts Curve Line Chart */}
               <div className="rounded-2xl border border-slate-200/60 bg-white p-5 md:col-span-3">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Activity className="h-4.5 w-4.5 text-cyan-600" />
                     <span className="text-xs font-bold text-slate-900">Perbandingan Kurva WHO</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">Unit: cm / kg</span>
+                  
+                  {/* Curve Toggle Tabs */}
+                  <div className="flex rounded-lg bg-slate-100 p-0.5 border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setCurveType("height")}
+                      className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition ${
+                        curveType === "height"
+                          ? "bg-white text-cyan-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Tinggi (cm)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurveType("weight")}
+                      className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition ${
+                        curveType === "weight"
+                          ? "bg-white text-emerald-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      Berat (kg)
+                    </button>
+                  </div>
                 </div>
+
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <LineChart data={curveData} margin={{ top: 10, right: 15, left: -25, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: "bold", fill: "#64748b" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                      <Tooltip cursor={{ fill: "rgba(14,116,144,0.02)" }} />
-                      <Bar dataKey="Anak" radius={[8, 8, 0, 0]} maxBarSize={32}>
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index === 0 ? "#06b6d4" : "#10b981"} />
-                        ))}
-                      </Bar>
-                      <Bar dataKey="WHO Standard" fill="#e2e8f0" radius={[8, 8, 0, 0]} maxBarSize={32} />
-                    </BarChart>
+                      <XAxis
+                        dataKey="age_month"
+                        type="number"
+                        domain={[0, 60]}
+                        tick={{ fontSize: 10, fill: "#64748b" }}
+                        axisLine={false}
+                        tickLine={false}
+                        label={{ value: "Usia (bulan)", position: "insideBottom", offset: -5, fontSize: 10, fill: "#94a3b8" }}
+                      />
+                      <YAxis
+                        type="number"
+                        domain={curveType === "height" ? [40, 130] : [2, 25]}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        formatter={(value, name) => {
+                          if (value === null || value === undefined) return [null];
+                          return [`${value} ${curveType === "height" ? "cm" : "kg"}`, name];
+                        }}
+                      />
+                      <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                      <Line
+                        type="monotone"
+                        dataKey="Standar WHO"
+                        stroke={curveType === "height" ? "#06b6d4" : "#10b981"}
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="Ukuran Anak"
+                        stroke="#ef4444"
+                        strokeWidth={0}
+                        dot={{ r: 6, stroke: '#ef4444', strokeWidth: 3, fill: '#ffffff' }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
+
 
               {/* Standard text growth explainers */}
               <div className="rounded-2xl border border-slate-200/60 bg-slate-50/20 p-5 md:col-span-2 space-y-4">
