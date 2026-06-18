@@ -40,8 +40,8 @@ export default function LoginPage() {
           <div className="pointer-events-none absolute bottom-24 left-20 h-52 w-52 rounded-full bg-brand-500/15 blur-2xl" />
 
           <Link to="/" className="relative inline-flex w-fit items-center gap-3 text-white">
-            <span className="rounded-2xl bg-white/15 p-2.5 ring-1 ring-inset ring-white/20">
-              <Activity className="h-6 w-6" />
+            <span className="rounded-2xl bg-white/15 p-1 ring-1 ring-inset ring-white/20">
+              <img src="/logo.png" alt="StuntGuard" className="h-9 w-9 rounded-xl object-contain" />
             </span>
             <span>
               <span className="block font-heading text-xl font-extrabold">StuntGuard</span>

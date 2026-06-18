@@ -1,10 +1,10 @@
 import { FormEvent, useState } from "react";
 import {
   Activity,
+  ArrowRight,
   Baby,
   BookOpen,
   CheckCircle2,
-  ClipboardCheck,
   HeartPulse,
   LogIn,
   MessageCircle,
@@ -29,19 +29,31 @@ import type { ChatChildContext, Gender, PredictionRequest, PredictionResponse } 
 const DISCLAIMER =
   "Hasil ini merupakan skrining awal dan bukan diagnosis medis. Silakan konsultasikan ke petugas kesehatan atau Puskesmas untuk pemeriksaan lanjutan.";
 
-const whyCards: Array<{ title: string; text: string; icon: LucideIcon }> = [
-  { title: "Pantau pertumbuhan anak", text: "Catat tinggi dan berat anak secara berkala.", icon: HeartPulse },
-  { title: "Kenali risiko lebih awal", text: "Dapatkan sinyal awal jika pertumbuhan perlu perhatian.", icon: ShieldCheck },
-  { title: "Dapatkan edukasi gizi", text: "Pelajari informasi gizi yang aman dan mudah dipahami.", icon: BookOpen },
-  { title: "Konsultasi dengan petugas", text: "Lanjutkan ke Posyandu atau Puskesmas bila diperlukan.", icon: Stethoscope },
-];
-
-const featureCards: Array<{ title: string; icon: LucideIcon }> = [
-  { title: "Cek risiko stunting tanpa login", icon: ClipboardCheck },
-  { title: "Edukasi gizi dengan AI", icon: MessageCircle },
-  { title: "Riwayat pertumbuhan anak", icon: HeartPulse },
-  { title: "Konsultasi dengan petugas", icon: Stethoscope },
-  { title: "Dashboard Posyandu/Puskesmas", icon: Activity },
+const highlights: Array<{ title: string; text: string; icon: LucideIcon; gradient: string }> = [
+  {
+    title: "Pantau pertumbuhan anak",
+    text: "Catat tinggi dan berat anak secara berkala untuk melihat tren pertumbuhan.",
+    icon: HeartPulse,
+    gradient: "from-emerald-500/10 to-teal-500/10",
+  },
+  {
+    title: "Kenali risiko lebih awal",
+    text: "Dapatkan sinyal awal jika pertumbuhan anak memerlukan perhatian lebih.",
+    icon: ShieldCheck,
+    gradient: "from-cyan-500/10 to-blue-500/10",
+  },
+  {
+    title: "Edukasi gizi dengan AI",
+    text: "Pelajari informasi gizi yang aman dan mudah dipahami dari asisten AI.",
+    icon: BookOpen,
+    gradient: "from-violet-500/10 to-purple-500/10",
+  },
+  {
+    title: "Konsultasi dengan petugas",
+    text: "Lanjutkan ke Posyandu atau Puskesmas bila diperlukan melalui sistem konsultasi.",
+    icon: Stethoscope,
+    gradient: "from-amber-500/10 to-orange-500/10",
+  },
 ];
 
 function clamp(value: number, min: number, max: number) {
@@ -51,6 +63,83 @@ function clamp(value: number, min: number, max: number) {
 
 function roundOne(value: number) {
   return Math.round(value * 10) / 10;
+}
+
+/* ---------- Hero Illustration (inline SVG) ---------- */
+function HeroIllustration() {
+  return (
+    <div className="relative mx-auto w-full max-w-sm" aria-hidden="true">
+      <svg viewBox="0 0 400 360" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full drop-shadow-xl">
+        {/* Background circle */}
+        <circle cx="200" cy="180" r="150" fill="url(#heroGrad)" opacity="0.15" />
+        <circle cx="200" cy="180" r="110" fill="url(#heroGrad)" opacity="0.1" />
+
+        {/* Growth chart bars */}
+        <rect x="90" y="230" width="28" height="60" rx="6" fill="#06b6d4" opacity="0.3" />
+        <rect x="130" y="210" width="28" height="80" rx="6" fill="#06b6d4" opacity="0.45" />
+        <rect x="170" y="185" width="28" height="105" rx="6" fill="#06b6d4" opacity="0.6" />
+        <rect x="210" y="160" width="28" height="130" rx="6" fill="#06b6d4" opacity="0.75" />
+        <rect x="250" y="140" width="28" height="150" rx="6" fill="#06b6d4" opacity="0.9" />
+        <rect x="290" y="120" width="28" height="170" rx="6" fill="#0891b2" />
+
+        {/* Trend line */}
+        <polyline
+          points="104,225 144,205 184,180 224,155 264,135 304,115"
+          stroke="#10b981"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+
+        {/* Dots on trend line */}
+        {[
+          [104, 225],
+          [144, 205],
+          [184, 180],
+          [224, 155],
+          [264, 135],
+          [304, 115],
+        ].map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r="5" fill="#10b981" stroke="#fff" strokeWidth="2" />
+        ))}
+
+        {/* Heart icon top-right */}
+        <g transform="translate(310,70)">
+          <circle cx="0" cy="0" r="22" fill="#fef3c7" />
+          <path
+            d="M0-8C-3-14-12-14-12-8C-12-2 0 8 0 8S12-2 12-8C12-14 3-14 0-8Z"
+            fill="#f59e0b"
+            opacity="0.8"
+          />
+        </g>
+
+        {/* Shield icon top-left */}
+        <g transform="translate(85,85)">
+          <circle cx="0" cy="0" r="20" fill="#ecfdf5" />
+          <path
+            d="M0-10L-8-6V0C-8 6 0 10 0 10S8 6 8 0V-6L0-10Z"
+            fill="#10b981"
+            opacity="0.7"
+          />
+          <path d="M-3 0L-1 2L3-2" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+
+        {/* Child silhouette center-left */}
+        <g transform="translate(60,250)">
+          <circle cx="0" cy="-15" r="10" fill="#0e7490" opacity="0.5" />
+          <path d="M-8 0C-8-5-5-8 0-8S8-5 8 0V20H-8V0Z" fill="#0e7490" opacity="0.4" rx="4" />
+        </g>
+
+        <defs>
+          <linearGradient id="heroGrad" x1="50" y1="30" x2="350" y2="330">
+            <stop stopColor="#06b6d4" />
+            <stop offset="1" stopColor="#10b981" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
 }
 
 export default function LandingPage() {
@@ -117,12 +206,11 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen bg-canvas text-slate-950">
-      <nav className="sticky top-0 z-30 border-b border-brand-100 bg-white/90 shadow-sm backdrop-blur-xl">
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-30 border-b border-brand-100/60 bg-white/90 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <a href="#hero" className="flex items-center gap-3">
-            <span className="rounded-xl bg-brand-700 p-2 text-white">
-              <Activity className="h-5 w-5" />
-            </span>
+            <img src="/logo.png" alt="StuntGuard" className="h-10 w-10 rounded-xl object-contain" />
             <span>
               <span className="block font-heading text-lg font-extrabold text-slate-950">StuntGuard</span>
               <span className="hidden text-[10px] font-bold uppercase tracking-[0.14em] text-brand-700 sm:block">Tumbuh terpantau</span>
@@ -132,7 +220,7 @@ export default function LandingPage() {
             <a href="#cek" className="transition hover:text-brand-700">Cek Stunting</a>
             <Link to="/chatbot" className="transition hover:text-brand-700">Edukasi</Link>
             <a href="#tentang" className="transition hover:text-brand-700">Tentang</a>
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-full bg-care-700 px-4 py-2.5 text-white shadow-sm transition hover:bg-care-800">
+            <Link to="/login" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-care-600 to-care-700 px-5 py-2.5 text-white shadow-lg shadow-care-700/20 transition hover:shadow-care-700/30">
               <LogIn className="h-4 w-4" />
               Login / Daftar
             </Link>
@@ -148,118 +236,79 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section id="hero" className="relative overflow-hidden border-b border-brand-100 bg-gradient-to-br from-white via-canvas to-brand-50">
-        <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-brand-100/50 blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-amber-100/60 blur-3xl" />
-        <div className="relative mx-auto grid min-h-[650px] max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8">
+      {/* ── Hero Section ── */}
+      <section id="hero" className="relative overflow-hidden border-b border-brand-100/50">
+        {/* Background decorations */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-50/80 via-white to-care-50/60" />
+        <div className="pointer-events-none absolute -left-32 top-20 h-80 w-80 rounded-full bg-brand-200/30 blur-[100px]" />
+        <div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-care-200/30 blur-[100px]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-100/25 blur-[80px]" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-24">
           <div className="flex flex-col justify-center">
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-sm font-bold text-brand-800 shadow-sm">
-              <Sparkles className="h-4 w-4" />
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-200/70 bg-white/80 px-4 py-2 text-sm font-bold text-brand-800 shadow-sm backdrop-blur-sm">
+              <Sparkles className="h-4 w-4 text-amber-500" />
               Skrining awal untuk orang tua
             </div>
-            <h1 className="mt-6 max-w-3xl font-heading text-4xl font-extrabold leading-[1.06] text-slate-950 sm:text-5xl lg:text-6xl">
-              Pantau tumbuh kembang. <span className="text-brand-700">Ambil langkah lebih awal.</span>
+            <h1 className="mt-6 max-w-xl font-heading text-4xl font-extrabold leading-[1.08] text-slate-950 sm:text-5xl lg:text-[3.4rem]">
+              Pantau tumbuh kembang.{" "}
+              <span className="bg-gradient-to-r from-brand-700 to-care-600 bg-clip-text text-transparent">
+                Ambil langkah lebih awal.
+              </span>
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              StuntGuard membantu orang tua melakukan skrining awal risiko stunting dari usia, jenis kelamin, tinggi badan, dan berat badan anak.
+            <p className="mt-5 max-w-lg text-base leading-7 text-slate-600 sm:text-lg">
+              StuntGuard membantu orang tua melakukan skrining awal risiko stunting dari data pertumbuhan anak — mudah, cepat, dan tanpa login.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a href="#cek" className="inline-flex items-center gap-2 rounded-full bg-care-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-care-700/20 transition hover:bg-care-800">
+              <a
+                href="#cek"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-care-600 to-care-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-care-700/25 transition hover:shadow-xl hover:shadow-care-700/30"
+              >
                 <HeartPulse className="h-4 w-4" />
-                Cek Sekarang
+                Cek Risiko Sekarang
+                <ArrowRight className="h-4 w-4" />
               </a>
-              <Link to="/chatbot" className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-5 py-3 text-sm font-bold text-brand-800 transition hover:bg-brand-50">
-                <BookOpen className="h-4 w-4" />
-                Pelajari Stunting
+              <Link
+                to="/chatbot"
+                className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-6 py-3.5 text-sm font-bold text-brand-800 shadow-sm transition hover:bg-brand-50 hover:shadow-md"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Tanya AI Tentang Stunting
               </Link>
             </div>
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-slate-600 sm:text-sm">
-              {["Tanpa login", "Hasil mudah dipahami", "Arahan langkah berikutnya"].map((item) => (
+            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600">
+              {["Tanpa login", "Hasil mudah dipahami", "Saran langkah berikutnya"].map((item) => (
                 <span key={item} className="inline-flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-brand-700" />
+                  <CheckCircle2 className="h-4 w-4 text-care-600" />
                   {item}
                 </span>
               ))}
             </div>
-            <p className="mt-5 max-w-xl border-l-2 border-amber-400 pl-3 text-sm leading-6 text-amber-800">
-              Skrining bukan diagnosis medis. Konsultasikan hasil ke Posyandu atau Puskesmas.
-            </p>
           </div>
-
-          <div className="flex items-center justify-center">
-            <div className="relative w-full max-w-md rounded-[2rem] border border-brand-100 bg-white/95 p-6 shadow-2xl shadow-brand-900/10">
-              <div className="pointer-events-none absolute -right-3 -top-3 h-20 w-20 rounded-full border border-brand-200 bg-brand-50/80" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Kartu Pertumbuhan Anak</p>
-                  <h2 className="mt-2 font-heading text-2xl font-extrabold text-slate-950">Pantau dengan tenang</h2>
-                </div>
-                <span className="relative rounded-2xl bg-brand-50 p-3 text-brand-700 ring-1 ring-brand-100">
-                  <Baby className="h-6 w-6" />
-                </span>
-              </div>
-              <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-brand-50 p-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-slate-700">Usia</span>
-                    <span className="font-bold text-slate-950">24 bulan</span>
-                  </div>
-                  <div className="mt-3 h-2 rounded-full bg-white">
-                    <div className="h-2 w-2/5 rounded-full bg-gradient-to-r from-brand-500 to-brand-700" />
-                  </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-brand-100 p-4">
-                    <Ruler className="h-5 w-5 text-brand-700" />
-                    <p className="mt-3 text-sm text-slate-500">Tinggi</p>
-                    <p className="font-heading text-2xl font-extrabold text-slate-950">82.5 cm</p>
-                  </div>
-                  <div className="rounded-2xl border border-brand-100 p-4">
-                    <Scale className="h-5 w-5 text-brand-700" />
-                    <p className="mt-3 text-sm text-slate-500">Berat</p>
-                    <p className="font-heading text-2xl font-extrabold text-slate-950">10.4 kg</p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                  Hasil mudah dipahami, dengan saran langkah berikutnya untuk orang tua.
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center justify-center lg:pl-8">
+            <HeroIllustration />
           </div>
         </div>
       </section>
 
-      <section id="tentang" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <p className="text-sm font-bold text-brand-700">Kenapa deteksi dini penting?</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-950">Pemantauan sederhana dapat membantu orang tua mengambil langkah lebih cepat.</h2>
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-          {whyCards.map(({ title, text, icon: Icon }) => (
-            <article key={title} className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg">
-              <span className="inline-flex rounded-xl bg-brand-50 p-3 text-brand-700">
-                <Icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 font-bold text-slate-950">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="cek" className="border-y border-care-100 bg-amber-50/50">
-        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+      {/* ── Form Cek Stunting ── */}
+      <section id="cek" className="relative border-b border-brand-100/50 bg-gradient-to-b from-white to-brand-50/40">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="text-sm font-bold text-brand-700">Cek Risiko Stunting</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-950">Masukkan data pertumbuhan anak</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Data ini digunakan untuk skrining awal. Pastikan pengukuran tinggi dan berat dilakukan seakurat mungkin.
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-700">Cek Risiko Stunting</p>
+            <h2 className="mt-2 font-heading text-3xl font-extrabold text-slate-950 sm:text-4xl">Masukkan data pertumbuhan anak</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+              Pastikan pengukuran tinggi dan berat dilakukan seakurat mungkin. Data tidak disimpan di server.
             </p>
           </div>
 
           {error ? <div className="mt-6"><ErrorBlock message={error} /></div> : null}
 
-          <form className="mt-8 rounded-[2rem] border border-brand-100 bg-white p-5 shadow-xl shadow-brand-900/5 sm:p-7" onSubmit={submit}>
+          <form
+            className="mt-8 rounded-[2rem] border border-brand-100/80 bg-white p-5 shadow-xl shadow-brand-900/[0.04] sm:p-8"
+            onSubmit={submit}
+          >
+            {/* Gender selection */}
             <div>
               <p className="text-sm font-bold text-slate-950">Jenis Kelamin Anak</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -275,18 +324,18 @@ export default function LandingPage() {
                       type="button"
                       onClick={() => updateForm({ gender: item.value })}
                       aria-pressed={selected}
-                      className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${
+                      className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition duration-200 ${
                         selected
-                          ? "border-brand-600 bg-brand-50 ring-2 ring-brand-100"
-                          : "border-slate-200 bg-white hover:border-brand-200 hover:bg-brand-50/50"
+                          ? "border-brand-500 bg-brand-50 shadow-md shadow-brand-500/10"
+                          : "border-slate-200 bg-white hover:border-brand-200 hover:bg-brand-50/30"
                       }`}
                     >
-                      <span className={`rounded-xl p-3 ${selected ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600"}`}>
+                      <span className={`rounded-xl p-3 transition ${selected ? "bg-gradient-to-br from-brand-600 to-brand-700 text-white shadow-sm" : "bg-slate-100 text-slate-500"}`}>
                         <Icon className="h-5 w-5" />
                       </span>
                       <span>
                         <span className="block font-bold text-slate-950">{item.label}</span>
-                        <span className="text-sm text-slate-500">Pilih jenis kelamin</span>
+                        <span className="text-xs text-slate-400">Pilih jenis kelamin</span>
                       </span>
                     </button>
                   );
@@ -294,20 +343,22 @@ export default function LandingPage() {
               </div>
             </div>
 
+            {/* Numeric inputs */}
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              {/* Age */}
+              <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 to-brand-50/30 p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-slate-950">Usia Anak</p>
-                    <p className="mt-1 text-3xl font-bold text-brand-700">{form.age_month} bulan</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Usia Anak</p>
+                    <p className="mt-1 font-heading text-3xl font-extrabold text-brand-700">{form.age_month} <span className="text-lg font-bold text-slate-400">bulan</span></p>
                   </div>
-                  <Baby className="h-7 w-7 text-brand-700" />
+                  <Baby className="h-8 w-8 text-brand-300" />
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => updateForm({ age_month: clamp(form.age_month - 1, 0, 60) })}
-                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-300 bg-white p-2 text-slate-700 transition hover:border-brand-200 hover:bg-brand-50"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
                     aria-label="Kurangi usia"
                   >
                     <Minus className="h-4 w-4" />
@@ -320,12 +371,12 @@ export default function LandingPage() {
                     value={form.age_month}
                     onChange={(event) => updateForm({ age_month: clamp(Number(event.target.value), 0, 60) })}
                     aria-label="Usia anak dalam bulan"
-                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-center font-bold outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center font-bold outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
                   />
                   <button
                     type="button"
                     onClick={() => updateForm({ age_month: clamp(form.age_month + 1, 0, 60) })}
-                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-300 bg-white p-2 text-slate-700 transition hover:border-brand-200 hover:bg-brand-50"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
                     aria-label="Tambah usia"
                   >
                     <Plus className="h-4 w-4" />
@@ -333,13 +384,14 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              {/* Height */}
+              <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 to-care-50/30 p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-slate-950">Tinggi Badan</p>
-                    <p className="mt-1 text-3xl font-bold text-brand-700">{form.height_cm.toFixed(1)} cm</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tinggi Badan</p>
+                    <p className="mt-1 font-heading text-3xl font-extrabold text-brand-700">{form.height_cm.toFixed(1)} <span className="text-lg font-bold text-slate-400">cm</span></p>
                   </div>
-                  <Ruler className="h-7 w-7 text-brand-700" />
+                  <Ruler className="h-8 w-8 text-care-300" />
                 </div>
                 <input
                   type="range"
@@ -360,23 +412,24 @@ export default function LandingPage() {
                   value={form.height_cm}
                   onChange={(event) => updateForm({ height_cm: clamp(roundOne(Number(event.target.value)), 20.1, 149.9) })}
                   aria-label="Tinggi badan anak dalam sentimeter"
-                  className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-center font-bold outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+                  className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-center font-bold outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
                 />
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              {/* Weight */}
+              <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 to-amber-50/30 p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-slate-950">Berat Badan</p>
-                    <p className="mt-1 text-3xl font-bold text-brand-700">{form.weight_kg.toFixed(1)} kg</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Berat Badan</p>
+                    <p className="mt-1 font-heading text-3xl font-extrabold text-brand-700">{form.weight_kg.toFixed(1)} <span className="text-lg font-bold text-slate-400">kg</span></p>
                   </div>
-                  <Scale className="h-7 w-7 text-brand-700" />
+                  <Scale className="h-8 w-8 text-amber-300" />
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => updateForm({ weight_kg: clamp(roundOne(form.weight_kg - 0.1), 1.1, 59.9) })}
-                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-300 bg-white p-2 text-slate-700 transition hover:border-brand-200 hover:bg-brand-50"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
                     aria-label="Kurangi berat"
                   >
                     <Minus className="h-4 w-4" />
@@ -390,12 +443,12 @@ export default function LandingPage() {
                     value={form.weight_kg}
                     onChange={(event) => updateForm({ weight_kg: clamp(roundOne(Number(event.target.value)), 1.1, 59.9) })}
                     aria-label="Berat badan anak dalam kilogram"
-                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-center font-bold outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-center font-bold outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
                   />
                   <button
                     type="button"
                     onClick={() => updateForm({ weight_kg: clamp(roundOne(form.weight_kg + 0.1), 1.1, 59.9) })}
-                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-300 bg-white p-2 text-slate-700 transition hover:border-brand-200 hover:bg-brand-50"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
                     aria-label="Tambah berat"
                   >
                     <Plus className="h-4 w-4" />
@@ -407,20 +460,25 @@ export default function LandingPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-care-700 px-5 py-4 text-base font-bold text-white shadow-lg shadow-care-700/20 transition hover:bg-care-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-7 inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-care-600 to-care-700 px-6 py-4 text-base font-bold text-white shadow-xl shadow-care-700/20 transition hover:shadow-2xl hover:shadow-care-700/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <HeartPulse className="h-5 w-5" />
               {loading ? "Memproses hasil..." : "Cek Risiko Sekarang"}
             </button>
+
+            <p className="mt-4 text-center text-xs text-slate-400">
+              Skrining bukan diagnosis medis. Konsultasikan hasil ke Posyandu atau Puskesmas.
+            </p>
           </form>
         </div>
       </section>
 
+      {/* ── Hasil Skrining ── */}
       {result ? (
         <section id="hasil" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8">
           <div>
             <p className="text-sm font-bold text-brand-700">Hasil Skrining</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-950">Ringkasan untuk orang tua</h2>
+            <h2 className="mt-2 font-heading text-3xl font-extrabold text-slate-950">Ringkasan untuk orang tua</h2>
           </div>
           <div className="mt-5">
             <PredictionResultCard
@@ -432,49 +490,37 @@ export default function LandingPage() {
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <p className="text-sm font-bold text-brand-700">Fitur StuntGuard</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-950">Sederhana untuk orang tua, berguna untuk petugas.</h2>
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-5">
-          {featureCards.map(({ title, icon: Icon }) => (
-            <article key={title} className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card">
-              <Icon className="h-6 w-6 text-brand-700" />
-              <h3 className="mt-4 text-sm font-bold leading-6 text-slate-950">{title}</h3>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-care-100 bg-care-50/70">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-sm font-bold text-brand-700">Cara Kerja StuntGuard</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-950">Empat langkah mudah untuk skrining awal.</h2>
+      {/* ── Kenapa StuntGuard ── */}
+      <section id="tentang" className="border-y border-brand-100/50 bg-gradient-to-b from-white via-brand-50/20 to-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-700">Kenapa StuntGuard?</p>
+            <h2 className="mx-auto mt-2 max-w-2xl font-heading text-3xl font-extrabold text-slate-950 sm:text-4xl">
+              Pemantauan sederhana untuk langkah yang lebih tepat
+            </h2>
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
-            {[
-              "Masukkan usia, jenis kelamin, tinggi, dan berat badan anak.",
-              "Sistem melakukan skrining awal.",
-              "Hasil dan saran awal ditampilkan.",
-              "Jika perlu, lanjutkan konsultasi ke Posyandu atau Puskesmas.",
-            ].map((step, index) => (
-              <article key={step} className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-700 text-sm font-bold text-white">
-                  {index + 1}
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {highlights.map(({ title, text, icon: Icon, gradient }) => (
+              <article
+                key={title}
+                className="group rounded-2xl border border-brand-100/80 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-900/[0.06]"
+              >
+                <span className={`inline-flex rounded-2xl bg-gradient-to-br ${gradient} p-4`}>
+                  <Icon className="h-6 w-6 text-brand-700" />
                 </span>
-                <p className="mt-4 text-sm font-semibold leading-6 text-slate-700">{step}</p>
+                <h3 className="mt-5 font-heading text-lg font-bold text-slate-950">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">{text}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ── Disclaimer ── */}
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900 shadow-card">
+        <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-amber-50/60 p-5 text-amber-900 shadow-sm">
           <div className="flex gap-3">
-            <ShieldCheck className="mt-1 h-5 w-5 flex-none" />
+            <ShieldCheck className="mt-0.5 h-5 w-5 flex-none text-amber-600" />
             <div>
               <h2 className="font-bold">Disclaimer</h2>
               <p className="mt-2 text-sm leading-6">{DISCLAIMER}</p>
@@ -483,9 +529,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-care-100 bg-white">
+      {/* ── Footer ── */}
+      <footer className="border-t border-brand-100/50 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p className="font-semibold text-slate-700">StuntGuard</p>
+          <p className="font-heading font-bold text-slate-700">StuntGuard</p>
           <p>Skrining awal stunting untuk edukasi dan pemantauan keluarga.</p>
         </div>
       </footer>

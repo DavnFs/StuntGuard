@@ -1,10 +1,19 @@
 import { FormEvent, useState } from "react";
-import { ClipboardPlus, Gauge } from "lucide-react";
+import { Baby, ClipboardPlus, Gauge, HeartPulse, Minus, Plus, Ruler, Scale, UserRound, Users } from "lucide-react";
 
 import PredictionResultCard from "../components/PredictionResultCard";
 import { ErrorBlock } from "../components/StateBlock";
 import { api } from "../services/api";
 import type { ChatChildContext, Gender, PredictionRequest, PredictionResponse } from "../types";
+
+function clamp(value: number, min: number, max: number) {
+  if (Number.isNaN(value)) return min;
+  return Math.min(max, Math.max(min, value));
+}
+
+function roundOne(value: number) {
+  return Math.round(value * 10) / 10;
+}
 
 export default function QuickPredictionPage() {
   const [form, setForm] = useState<PredictionRequest>({
@@ -16,6 +25,10 @@ export default function QuickPredictionPage() {
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const updateForm = (updates: Partial<PredictionRequest>) => {
+    setForm((current) => ({ ...current, ...updates }));
+  };
 
   const buildChatContext = (prediction: PredictionResponse): ChatChildContext => ({
     age_month: form.age_month,
@@ -65,38 +78,95 @@ export default function QuickPredictionPage() {
 
       {error ? <ErrorBlock message={error} /> : null}
 
-      <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[440px_1fr]">
         <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             <ClipboardPlus className="h-5 w-5 text-brand-700" />
             <h3 className="text-base font-semibold text-slate-950">Input Pemeriksaan</h3>
           </div>
-          <form className="mt-4 space-y-4" onSubmit={submit}>
-            <label className="block text-sm font-medium text-slate-700">
-              Usia (bulan)
+          <form className="mt-5 space-y-5" onSubmit={submit}>
+            {/* Gender */}
+            <div>
+              <p className="text-sm font-bold text-slate-700">Jenis Kelamin</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {[
+                  { value: "female" as Gender, label: "Perempuan", icon: UserRound },
+                  { value: "male" as Gender, label: "Laki-laki", icon: Users },
+                ].map((item) => {
+                  const selected = form.gender === item.value;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => updateForm({ gender: item.value })}
+                      aria-pressed={selected}
+                      className={`flex items-center gap-2 rounded-xl border-2 p-3 text-left text-sm transition ${
+                        selected
+                          ? "border-brand-500 bg-brand-50 font-bold text-brand-800"
+                          : "border-slate-200 text-slate-600 hover:border-brand-200"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Age */}
+            <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 to-brand-50/30 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Usia</p>
+                <Baby className="h-5 w-5 text-brand-300" />
+              </div>
+              <p className="mt-1 font-heading text-2xl font-extrabold text-brand-700">{form.age_month} <span className="text-sm font-bold text-slate-400">bulan</span></p>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateForm({ age_month: clamp(form.age_month - 1, 0, 60) })}
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-brand-300 hover:bg-brand-50"
+                  aria-label="Kurangi usia"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <input
+                  required
+                  type="number"
+                  min={0}
+                  max={60}
+                  value={form.age_month}
+                  onChange={(event) => updateForm({ age_month: clamp(Number(event.target.value), 0, 60) })}
+                  className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center text-sm font-bold outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => updateForm({ age_month: clamp(form.age_month + 1, 0, 60) })}
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-brand-300 hover:bg-brand-50"
+                  aria-label="Tambah usia"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Height */}
+            <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 to-care-50/30 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tinggi Badan</p>
+                <Ruler className="h-5 w-5 text-care-300" />
+              </div>
+              <p className="mt-1 font-heading text-2xl font-extrabold text-brand-700">{form.height_cm.toFixed(1)} <span className="text-sm font-bold text-slate-400">cm</span></p>
               <input
-                required
-                type="number"
-                min={0}
-                max={60}
-                value={form.age_month}
-                onChange={(event) => setForm({ ...form, age_month: Number(event.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+                type="range"
+                min={45}
+                max={125}
+                step={0.1}
+                value={form.height_cm}
+                onChange={(event) => updateForm({ height_cm: roundOne(Number(event.target.value)) })}
+                className="mt-3 w-full accent-care-600"
               />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Gender
-              <select
-                value={form.gender}
-                onChange={(event) => setForm({ ...form, gender: event.target.value as Gender })}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-              >
-                <option value="female">Perempuan</option>
-                <option value="male">Laki-laki</option>
-              </select>
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Tinggi Badan (cm)
               <input
                 required
                 type="number"
@@ -104,36 +174,64 @@ export default function QuickPredictionPage() {
                 max={150}
                 step={0.1}
                 value={form.height_cm}
-                onChange={(event) => setForm({ ...form, height_cm: Number(event.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+                onChange={(event) => updateForm({ height_cm: clamp(roundOne(Number(event.target.value)), 20.1, 149.9) })}
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center text-sm font-bold outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Berat Badan (kg)
-              <input
-                required
-                type="number"
-                min={1}
-                max={60}
-                step={0.1}
-                value={form.weight_kg}
-                onChange={(event) => setForm({ ...form, weight_kg: Number(event.target.value) })}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-              />
-            </label>
+            </div>
+
+            {/* Weight */}
+            <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50/80 to-amber-50/30 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Berat Badan</p>
+                <Scale className="h-5 w-5 text-amber-300" />
+              </div>
+              <p className="mt-1 font-heading text-2xl font-extrabold text-brand-700">{form.weight_kg.toFixed(1)} <span className="text-sm font-bold text-slate-400">kg</span></p>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateForm({ weight_kg: clamp(roundOne(form.weight_kg - 0.1), 1.1, 59.9) })}
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-amber-300 hover:bg-amber-50"
+                  aria-label="Kurangi berat"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <input
+                  required
+                  type="number"
+                  min={1}
+                  max={60}
+                  step={0.1}
+                  value={form.weight_kg}
+                  onChange={(event) => updateForm({ weight_kg: clamp(roundOne(Number(event.target.value)), 1.1, 59.9) })}
+                  className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center text-sm font-bold outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => updateForm({ weight_kg: clamp(roundOne(form.weight_kg + 0.1), 1.1, 59.9) })}
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-amber-300 hover:bg-amber-50"
+                  aria-label="Tambah berat"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-care-600 to-care-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-care-700/20 transition hover:shadow-xl disabled:opacity-60"
             >
               <Gauge className="h-4 w-4" />
-              {loading ? "Memproses..." : "Prediksi"}
+              {loading ? "Memproses..." : "Prediksi Sekarang"}
             </button>
           </form>
         </section>
 
         <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
-          <h3 className="text-base font-semibold text-slate-950">Hasil Prediksi</h3>
+          <div className="flex items-center gap-2">
+            <HeartPulse className="h-5 w-5 text-brand-700" />
+            <h3 className="text-base font-semibold text-slate-950">Hasil Prediksi</h3>
+          </div>
           {result ? (
             <div className="mt-4">
               <PredictionResultCard
@@ -142,9 +240,15 @@ export default function QuickPredictionPage() {
               />
             </div>
           ) : (
-            <p className="mt-4 text-sm text-slate-500">
-              Masukkan usia, gender, tinggi badan, dan berat badan untuk menjalankan skrining awal.
-            </p>
+            <div className="mt-8 flex flex-col items-center py-12 text-center">
+              <div className="rounded-2xl bg-brand-50 p-4">
+                <ClipboardPlus className="h-10 w-10 text-brand-300" />
+              </div>
+              <p className="mt-4 text-sm font-semibold text-slate-500">Belum ada hasil</p>
+              <p className="mt-1 max-w-xs text-xs text-slate-400">
+                Masukkan data anak di sebelah kiri, lalu klik "Prediksi Sekarang" untuk melihat hasil skrining.
+              </p>
+            </div>
           )}
         </section>
       </div>

@@ -17,7 +17,7 @@ import { clearCurrentUser, getCurrentUser } from "../services/auth";
 function getNavItems(role?: string) {
   if (role === "admin") {
     return [
-      { to: "/app/admin", label: "Admin Dashboard", icon: LayoutDashboard },
+      { to: "/app/admin", label: "Dashboard Petugas", icon: LayoutDashboard },
       { to: "/app/children", label: "Data Balita", icon: Users },
       { to: "/app/measurements", label: "Data Pemeriksaan", icon: ClipboardList },
       { to: "/app/consultations", label: "Konsultasi", icon: MessageSquareText },
@@ -25,7 +25,7 @@ function getNavItems(role?: string) {
     ];
   }
   return [
-    { to: "/app/parent", label: "Parent Dashboard", icon: LayoutDashboard },
+    { to: "/app/parent", label: "Beranda", icon: LayoutDashboard },
     { to: "/app/children", label: "Riwayat Anak", icon: Users },
     { to: "/app/predict", label: "Prediksi Cepat", icon: ClipboardPlus },
     { to: "/app/consultations", label: "Konsultasi", icon: MessageSquareText },
@@ -56,8 +56,8 @@ export default function Layout() {
         <div className="pointer-events-none absolute bottom-44 left-7 top-36 w-px bg-gradient-to-b from-transparent via-brand-300/35 to-transparent" />
 
         <div className="relative flex items-center gap-3">
-          <div className="rounded-2xl bg-white/15 p-2.5 text-brand-100 ring-1 ring-inset ring-white/20">
-            <Activity className="h-6 w-6" />
+          <div className="rounded-2xl bg-white/15 p-1 ring-1 ring-inset ring-white/20">
+            <img src="/logo.png" alt="StuntGuard" className="h-9 w-9 rounded-xl object-contain" />
           </div>
           <div>
             <h1 className="font-heading text-xl font-extrabold tracking-tight text-white">StuntGuard</h1>
@@ -111,8 +111,8 @@ export default function Layout() {
       <header className="sticky top-0 z-10 border-b border-brand-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="rounded-xl bg-brand-700 p-2 text-white">
-              <Activity className="h-5 w-5" />
+            <span className="rounded-xl bg-white p-0.5">
+              <img src="/logo.png" alt="StuntGuard" className="h-9 w-9 rounded-lg object-contain" />
             </span>
             <span>
               <span className="block font-heading text-base font-extrabold text-slate-950">StuntGuard</span>

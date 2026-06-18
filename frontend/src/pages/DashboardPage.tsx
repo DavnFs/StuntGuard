@@ -70,21 +70,21 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold text-brand-700">Dashboard Posyandu</p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-950">Monitoring Risiko Stunting Balita</h2>
+        <p className="text-sm font-semibold text-brand-700">Dashboard Petugas</p>
+        <h2 className="mt-1 text-2xl font-bold text-slate-950">Pemantauan Risiko Stunting Balita</h2>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard title="Total Balita" value={summary.total_children} icon={<Users className="h-5 w-5" />} tone="green" />
         <StatCard title="Total Pemeriksaan" value={summary.total_measurements} icon={<ClipboardList className="h-5 w-5" />} tone="blue" />
         <StatCard title="Normal" value={summary.count_by_nutrition_status.normal ?? 0} icon={<UserRound className="h-5 w-5" />} tone="green" />
-        <StatCard title="Stunted" value={summary.count_by_nutrition_status.stunted ?? 0} icon={<AlertTriangle className="h-5 w-5" />} tone="amber" />
-        <StatCard title="Severely Stunted" value={summary.count_by_nutrition_status["severely stunted"] ?? 0} icon={<AlertTriangle className="h-5 w-5" />} tone="red" />
+        <StatCard title="Pendek" value={summary.count_by_nutrition_status.stunted ?? 0} icon={<AlertTriangle className="h-5 w-5" />} tone="amber" />
+        <StatCard title="Sangat Pendek" value={summary.count_by_nutrition_status["severely stunted"] ?? 0} icon={<AlertTriangle className="h-5 w-5" />} tone="red" />
         <StatCard title="Risiko Stunting" value={`${summary.stunting_percentage}%`} icon={<TrendingUp className="h-5 w-5" />} tone="amber" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Anak Risiko Tinggi" value={summary.high_risk_children_count} icon={<AlertTriangle className="h-5 w-5" />} tone="red" />
+        <StatCard title="Risiko Tinggi" value={summary.high_risk_children_count} icon={<AlertTriangle className="h-5 w-5" />} tone="red" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -106,7 +106,7 @@ export default function DashboardPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
-          <h3 className="text-base font-semibold text-slate-950">Status Berdasarkan Gender</h3>
+          <h3 className="text-base font-semibold text-slate-950">Status Berdasarkan Jenis Kelamin</h3>
           <div className="mt-4 h-80">
             <ResponsiveContainer>
               <BarChart data={genderStatusData}>
@@ -192,7 +192,7 @@ export default function DashboardPage() {
       <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <div className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-red-600" />
-          <h3 className="text-base font-semibold text-slate-950">Kasus Risiko Tinggi Terbaru</h3>
+          <h3 className="text-base font-semibold text-slate-950">Balita Risiko Tinggi Terbaru</h3>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
