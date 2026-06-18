@@ -65,16 +65,30 @@ export default function ChildDetailPage() {
     }
   }, [childId]);
 
-  const chartData = useMemo(
-    () =>
-      measurements.map((item) => ({
+  const chartData = useMemo(() => {
+    if (!child) return [];
+    return measurements.map((item) => {
+      const genderAdjustment = child.gender === "male" ? 0.8 : 0.0;
+      let expectedHeight = 0;
+      let expectedWeight = 0;
+      if (item.age_month <= 24) {
+        expectedHeight = 50.0 + (item.age_month * 1.55) + genderAdjustment;
+        expectedWeight = 3.2 + (item.age_month * 0.32);
+      } else {
+        expectedHeight = 87.0 + ((item.age_month - 24) * 0.62) + genderAdjustment;
+        expectedWeight = 10.8 + ((item.age_month - 24) * 0.18);
+      }
+
+      return {
         age_month: item.age_month,
         height_cm: item.height_cm,
         weight_kg: item.weight_kg,
+        expected_height: Math.round(expectedHeight * 10) / 10,
+        expected_weight: Math.round(expectedWeight * 10) / 10,
         status: item.predicted_status,
-      })),
-    [measurements],
-  );
+      };
+    });
+  }, [measurements, child]);
 
   const submitMeasurement = async (event: FormEvent) => {
     event.preventDefault();
@@ -138,8 +152,10 @@ export default function ChildDetailPage() {
                 <YAxis yAxisId="weight" orientation="right" dataKey="weight_kg" label={{ value: "kg", angle: 90, position: "insideRight" }} />
                 <Tooltip />
                 <Legend />
-                <Line yAxisId="height" type="monotone" dataKey="height_cm" name="Tinggi Badan (cm)" stroke="var(--chart-normal)" strokeWidth={3} />
-                <Line yAxisId="weight" type="monotone" dataKey="weight_kg" name="Berat Badan (kg)" stroke="var(--chart-watch)" strokeWidth={3} />
+                <Line yAxisId="height" type="monotone" dataKey="height_cm" name="Tinggi Badan (cm)" stroke="var(--chart-normal)" strokeWidth={3} activeDot={{ r: 6 }} />
+                <Line yAxisId="height" type="monotone" dataKey="expected_height" name="Standar Tinggi WHO (cm)" stroke="var(--chart-normal)" strokeWidth={1.5} strokeDasharray="4 4" strokeOpacity={0.6} dot={false} />
+                <Line yAxisId="weight" type="monotone" dataKey="weight_kg" name="Berat Badan (kg)" stroke="var(--chart-watch)" strokeWidth={3} activeDot={{ r: 6 }} />
+                <Line yAxisId="weight" type="monotone" dataKey="expected_weight" name="Standar Berat WHO (kg)" stroke="var(--chart-watch)" strokeWidth={1.5} strokeDasharray="4 4" strokeOpacity={0.6} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

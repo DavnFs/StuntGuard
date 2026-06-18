@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -180,6 +180,15 @@ export default function LandingPage() {
   
   // Wizard state: 1: Jenis Kelamin, 2: Usia, 3: Pengukuran
   const [step, setStep] = useState(1);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const updateForm = (updates: Partial<PredictionRequest>) => {
     setForm((current) => ({ ...current, ...updates }));
@@ -257,8 +266,12 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-canvas text-slate-900 bg-dot-pattern">
       {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-40 border-b border-slate-200/50 bg-white/70 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+      <nav className={`sticky top-0 z-40 transition-all duration-350 ${
+        scrolled
+          ? "border-b border-slate-200/50 bg-white/90 shadow-md backdrop-blur-md py-3.5"
+          : "border-b border-transparent bg-transparent py-5"
+      }`}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="#hero" className="flex items-center gap-3">
             <span className="relative rounded-2xl bg-slate-50 p-1.5 border border-slate-100 shadow-sm">
               <img src="/logo.png" alt="StuntGuard" className="h-8 w-8 rounded-lg object-contain" />
@@ -299,7 +312,7 @@ export default function LandingPage() {
         <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-cyan-200/25 blur-3xl" />
         <div className="pointer-events-none absolute -right-24 bottom-10 h-[500px] w-[500px] rounded-full bg-emerald-100/30 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 items-center">
           <div className="flex flex-col justify-center text-left">
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-500/10 bg-cyan-500/5 px-4 py-2 text-xs font-bold tracking-wide text-cyan-800 shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-cyan-600" />
