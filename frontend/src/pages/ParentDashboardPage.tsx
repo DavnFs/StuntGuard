@@ -10,6 +10,8 @@ import {
   MessageSquareText,
   Sparkles,
   Users,
+  Calendar,
+  Sparkle,
 } from "lucide-react";
 
 import StatCard from "../components/StatCard";
@@ -45,61 +47,70 @@ export default function ParentDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting */}
-      <div className="rounded-2xl border border-brand-100/80 bg-gradient-to-r from-brand-50/80 via-white to-care-50/60 p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      
+      {/* Redesigned Greeting Banner */}
+      <div className="relative overflow-hidden rounded-[2rem] border border-cyan-500/10 bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600 p-6 sm:p-8 text-white shadow-xl shadow-cyan-900/10">
+        {/* Floating circles inside greeting banner */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/10 blur-2xl animate-pulse-glow" />
+        <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-white/5 blur-2xl" />
+
+        <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-brand-700">Selamat datang kembali 👋</p>
-            <h2 className="mt-1 font-heading text-2xl font-extrabold text-slate-950">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-white tracking-wide border border-white/10 backdrop-blur-sm">
+              <Sparkle className="h-3.5 w-3.5 text-amber-200 animate-spin" style={{ animationDuration: "6s" }} />
+              Selamat Datang Kembali
+            </div>
+            <h2 className="mt-4 font-heading text-3xl font-extrabold text-white tracking-tight">
               {user?.name ?? "Orang Tua"}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Pantau pertumbuhan anak Anda dan lakukan skrining risiko stunting secara berkala.
+            <p className="mt-2 text-sm text-cyan-50 max-w-xl leading-relaxed">
+              Pantau riwayat ukuran tubuh (tinggi & berat) anak Anda secara langsung dan lakukan deteksi risiko stunting secara berkala untuk menjaga tumbuh kembang optimal.
             </p>
           </div>
+          
           <Link
             to="/app/predict"
-            className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-r from-care-600 to-care-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-care-700/20 transition hover:shadow-xl"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-white px-5 py-4 text-sm font-bold text-cyan-850 hover:bg-slate-50 shadow-md transition duration-200 shrink-0 self-start sm:self-auto"
           >
-            <HeartPulse className="h-4 w-4" />
-            Cek Risiko Sekarang
+            <HeartPulse className="h-4 w-4 text-cyan-600" />
+            Skrining Mandiri Baru
           </Link>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards Section */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard title="Data Anak Tersimpan" value={children.length} icon={<Baby className="h-5 w-5" />} tone="green" />
         <StatCard title="Skrining Cepat" value="Aktif" icon={<ClipboardPlus className="h-5 w-5" />} tone="blue" />
-        <StatCard title="Konsultasi" value="Tersedia" icon={<MessageSquareText className="h-5 w-5" />} tone="amber" />
+        <StatCard title="Konsultasi Petugas" value="Tersedia" icon={<MessageSquareText className="h-5 w-5" />} tone="amber" />
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions Shortcuts */}
       <div className="grid gap-4 sm:grid-cols-3">
         {[
           {
             to: "/app/predict",
             icon: ClipboardPlus,
             title: "Prediksi Cepat",
-            desc: "Cek risiko tanpa menyimpan data",
-            gradient: "from-emerald-500/10 to-teal-500/10",
-            iconColor: "text-emerald-600",
+            desc: "Analisis stunting cepat tanpa rekam database",
+            gradient: "from-cyan-500/10 to-teal-500/10",
+            iconBg: "bg-cyan-50 text-cyan-600 border-cyan-100",
           },
           {
             to: "/app/consultations",
             icon: MessageSquareText,
-            title: "Konsultasi Petugas",
-            desc: "Ajukan pertanyaan ke petugas kesehatan",
-            gradient: "from-blue-500/10 to-cyan-500/10",
-            iconColor: "text-blue-600",
+            title: "Konsultasi Posyandu",
+            desc: "Hubungi kader kesehatan untuk bimbingan gizi",
+            gradient: "from-blue-500/10 to-indigo-500/10",
+            iconBg: "bg-blue-50 text-blue-600 border-blue-100",
           },
           {
             to: "/chatbot",
             icon: BookOpen,
-            title: "Edukasi Gizi",
-            desc: "Tanya AI tentang gizi dan stunting",
+            title: "Tanya AI Gizi",
+            desc: "Pelajari anjuran MPASI dari asisten cerdas AI",
             gradient: "from-violet-500/10 to-purple-500/10",
-            iconColor: "text-violet-600",
+            iconBg: "bg-violet-50 text-violet-600 border-violet-100",
           },
         ].map((action) => {
           const Icon = action.icon;
@@ -107,43 +118,54 @@ export default function ParentDashboardPage() {
             <Link
               key={action.to}
               to={action.to}
-              className="group flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-900/[0.06]"
+              onClick={(e) => {
+                if (action.to === "/chatbot") {
+                  e.preventDefault();
+                  window.dispatchEvent(new CustomEvent("open-chatbot"));
+                }
+              }}
+              className="group flex items-start gap-4 rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition duration-350 hover:-translate-y-0.5 hover:border-cyan-500/20 hover:shadow-lg"
             >
-              <span className={`rounded-2xl bg-gradient-to-br ${action.gradient} p-3`}>
-                <Icon className={`h-5 w-5 ${action.iconColor}`} />
+              <span className={`inline-flex rounded-xl border p-3.5 shrink-0 ${action.iconBg}`}>
+                <Icon className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-950 group-hover:text-brand-700">{action.title}</p>
-                <p className="mt-1 text-sm text-slate-500">{action.desc}</p>
+                <p className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">{action.title}</p>
+                <p className="mt-1 text-xs text-slate-500 leading-normal">{action.desc}</p>
               </div>
-              <ArrowRight className="mt-1 h-4 w-4 text-slate-300 transition group-hover:text-brand-500" />
+              <ArrowRight className="mt-1 h-4 w-4 text-slate-350 transition-transform group-hover:translate-x-1 group-hover:text-cyan-600 shrink-0" />
             </Link>
           );
         })}
       </div>
 
-      {/* Children List */}
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-brand-700" />
+      {/* Children List Widget */}
+      <section className="rounded-[2rem] border border-slate-200/60 bg-white p-6 shadow-xl shadow-cyan-900/[0.01]">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-cyan-50 p-2.5 border border-cyan-100 text-cyan-600">
+              <Users className="h-5 w-5" />
+            </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-950">Anak Terdaftar</h3>
-              <p className="mt-0.5 text-sm text-slate-500">Data anak yang sudah disimpan di sistem.</p>
+              <h3 className="text-base font-bold text-slate-950">Daftar Anak Terdaftar</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Pantau riwayat tumbuh kembang & kurva pertumbuhan anak.</p>
             </div>
           </div>
-          <Link to="/app/children" className="inline-flex items-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700">
+          <Link to="/app/children" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition">
             Kelola Data Anak
           </Link>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {children.length === 0 ? (
-            <div className="col-span-full rounded-xl border border-dashed border-slate-200 p-8 text-center">
-              <Baby className="mx-auto h-10 w-10 text-slate-300" />
-              <p className="mt-3 text-sm font-semibold text-slate-500">Belum ada data anak</p>
-              <p className="mt-1 text-xs text-slate-400">Tambahkan data anak untuk memulai pemantauan pertumbuhan.</p>
-              <Link to="/app/children" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700 hover:bg-brand-100">
-                Tambah Anak Pertama
+            <div className="col-span-full rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center flex flex-col items-center">
+              <div className="rounded-full bg-cyan-50 p-4 border border-cyan-100 animate-float-slow">
+                <Baby className="h-8 w-8 text-cyan-400" />
+              </div>
+              <p className="mt-4 text-sm font-bold text-slate-700">Belum ada anak yang didaftarkan</p>
+              <p className="mt-1 text-xs text-slate-400 max-w-xs leading-normal">Simpan data tinggi & berat badan anak agar petugas posyandu dapat memantau perkembangannya.</p>
+              <Link to="/app/children" className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-cyan-700 transition">
+                Daftarkan Anak Pertama
               </Link>
             </div>
           ) : (
@@ -151,20 +173,20 @@ export default function ParentDashboardPage() {
               <Link
                 key={child.id}
                 to={`/app/children/${child.id}`}
-                className="group flex items-center gap-4 rounded-xl border border-slate-200 p-4 transition hover:border-brand-200 hover:bg-brand-50/30"
+                className="group flex items-center gap-4 rounded-2xl border border-slate-150 p-4 transition duration-300 hover:border-cyan-500/20 hover:bg-cyan-500/[0.01]"
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-50 border border-cyan-100 text-sm font-extrabold text-cyan-700 transition-colors group-hover:bg-cyan-600 group-hover:text-white">
                   {child.name.charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-950 group-hover:text-brand-700">{child.name}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {child.gender === "male" ? "Laki-laki" : "Perempuan"}
-                    {child.posyandu_area ? ` · ${child.posyandu_area}` : ""}
+                  <p className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors truncate">{child.name}</p>
+                  <p className="mt-0.5 text-xs text-slate-400 font-medium">
+                    {child.gender === "male" ? "Laki-Laki" : "Perempuan"}
+                    {child.posyandu_area ? ` · Wilayah Posyandu ${child.posyandu_area}` : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-slate-400">
-                  <CalendarDays className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 shrink-0">
+                  <Calendar className="h-3.5 w-3.5 text-slate-350" />
                   {new Date(child.birth_date).toLocaleDateString("id-ID", { year: "numeric", month: "short" })}
                 </div>
               </Link>
@@ -173,16 +195,17 @@ export default function ParentDashboardPage() {
         </div>
       </section>
 
-      {/* Daily Tip */}
-      <div className="rounded-2xl border border-amber-100/80 bg-gradient-to-r from-amber-50 to-amber-50/50 p-5">
-        <div className="flex items-start gap-3">
-          <Sparkles className="mt-0.5 h-5 w-5 flex-none text-amber-500" />
-          <div>
-            <p className="text-sm font-bold text-amber-800">Tips Harian</p>
-            <p className="mt-1 text-sm leading-6 text-amber-700">{dailyTip}</p>
-          </div>
+      {/* Headspace-style daily tips */}
+      <div className="rounded-[2.5rem] border border-amber-500/10 bg-amber-500/[0.03] p-6 shadow-sm flex gap-4 items-start backdrop-blur-sm">
+        <div className="rounded-2xl bg-amber-100 p-3 border border-amber-250 text-amber-700 shrink-0">
+          <Sparkles className="h-5 w-5 text-amber-600 animate-pulse" />
+        </div>
+        <div>
+          <h4 className="text-sm font-bold text-amber-950">Tips Edukasi Gizi Hari Ini</h4>
+          <p className="mt-2 text-xs font-medium leading-relaxed text-amber-850">{dailyTip}</p>
         </div>
       </div>
+
     </div>
   );
 }

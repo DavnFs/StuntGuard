@@ -50,22 +50,26 @@ export default function Layout() {
         Langsung ke konten
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 overflow-hidden bg-ink-deep px-5 py-6 text-white shadow-2xl lg:flex lg:flex-col">
-        <div className="pointer-events-none absolute -right-16 top-28 h-48 w-48 rounded-full border border-white/10" />
-        <div className="pointer-events-none absolute -right-8 top-44 h-24 w-24 rounded-full border border-white/10" />
-        <div className="pointer-events-none absolute bottom-44 left-7 top-36 w-px bg-gradient-to-b from-transparent via-brand-300/35 to-transparent" />
-
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 px-5 py-6 text-white shadow-2xl lg:flex lg:flex-col border-r border-white/5">
+        {/* Glowing floating orbs inside sidebar */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl animate-pulse-glow" />
+        <div className="pointer-events-none absolute -left-20 bottom-10 h-40 w-40 rounded-full bg-emerald-500/5 blur-3xl" />
+        
         <div className="relative flex items-center gap-3">
-          <div className="rounded-2xl bg-white/15 p-1 ring-1 ring-inset ring-white/20">
-            <img src="/logo.png" alt="StuntGuard" className="h-9 w-9 rounded-xl object-contain" />
+          <div className="relative rounded-2xl bg-white/5 p-1.5 ring-1 ring-inset ring-white/10 shadow-inner">
+            <img src="/logo.png" alt="StuntGuard" className="h-8 w-8 rounded-lg object-contain" />
+            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-slate-950 animate-pulse" />
           </div>
           <div>
-            <h1 className="font-heading text-xl font-extrabold tracking-tight text-white">StuntGuard</h1>
-            <p className="text-xs font-medium text-brand-100">Tumbuh terpantau, langkah terarah</p>
+            <h1 className="font-heading text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+              StuntGuard
+              <span className="inline-flex rounded-md bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-400 border border-cyan-500/20">SaaS</span>
+            </h1>
+            <p className="text-[10px] font-medium text-slate-400">Tumbuh terpantau, langkah terarah</p>
           </div>
         </div>
 
-        <nav aria-label="Navigasi utama" className="relative mt-9 space-y-1.5">
+        <nav aria-label="Navigasi utama" className="relative mt-9 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -73,50 +77,63 @@ export default function Layout() {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/"}
+                onClick={(e) => {
+                  if (item.to === "/chatbot") {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("open-chatbot"));
+                  }
+                }}
                 className={({ isActive }) =>
-                  `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition duration-200 ${
+                  `group flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition duration-300 relative ${
                     isActive
-                      ? "bg-white text-brand-800 shadow-lg shadow-black/10"
-                      : "text-brand-50/80 hover:bg-white/10 hover:text-white"
+                      ? "bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-lg shadow-cyan-900/40 border-l-4 border-cyan-400"
+                      : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                   }`
                 }
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                {item.label}
+                <Icon className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                <span>{item.label}</span>
               </NavLink>
             );
           })}
         </nav>
 
-        <div className="relative mt-auto space-y-3">
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-3.5 text-xs leading-5 text-brand-50">
-            <p className="font-bold text-white">{user?.name ?? "Demo User"}</p>
-            <p>{user?.role === "admin" ? "Admin / Petugas" : "Orang tua"}</p>
+        <div className="relative mt-auto space-y-4">
+          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-xs leading-5 text-slate-300 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="font-bold text-white">{user?.name ?? "Demo User"}</p>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">{user?.role === "admin" ? "Admin / Petugas Kesehatan" : "Orang Tua / Wali"}</p>
             <button
               type="button"
               onClick={logout}
-              className="mt-2 inline-flex items-center gap-2 rounded-full px-1 font-bold text-brand-100 transition hover:text-white"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10 hover:text-white"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               Keluar akun
             </button>
           </div>
-          <div className="rounded-2xl border border-amber-200/50 bg-amber-50 p-3 text-xs leading-5 text-amber-900 shadow-card">
-            <ShieldCheck className="mb-2 h-4 w-4 text-amber-700" />
-            Hasil aplikasi adalah skrining awal dan edukasi. Diagnosis resmi tetap melalui tenaga kesehatan.
+          <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.04] p-4 text-xs leading-5 text-amber-200/90 shadow-card">
+            <div className="flex items-center gap-2 font-semibold text-amber-400 mb-1">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-amber-400" />
+              <span>Pemberitahuan</span>
+            </div>
+            Hasil aplikasi adalah skrining awal & edukasi gizi. Diagnosis resmi tetap melalui Posyandu/Puskesmas.
           </div>
         </div>
       </aside>
 
-      <header className="sticky top-0 z-10 border-b border-brand-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-10 border-b border-slate-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="rounded-xl bg-white p-0.5">
-              <img src="/logo.png" alt="StuntGuard" className="h-9 w-9 rounded-lg object-contain" />
+            <span className="relative rounded-xl bg-slate-50 p-1 border border-slate-100 shadow-sm">
+              <img src="/logo.png" alt="StuntGuard" className="h-8 w-8 rounded-lg object-contain" />
+              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
             </span>
             <span>
-              <span className="block font-heading text-base font-extrabold text-slate-950">StuntGuard</span>
-              <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-brand-700">
+              <span className="block font-heading text-sm font-bold text-slate-950">StuntGuard</span>
+              <span className="block text-[9px] font-bold uppercase tracking-[0.12em] text-cyan-600">
                 {user?.role === "admin" ? "Petugas" : "Orang tua"}
               </span>
             </span>
@@ -125,9 +142,9 @@ export default function Layout() {
             type="button"
             onClick={logout}
             aria-label="Keluar akun"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
         <nav aria-label="Navigasi utama" className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -138,15 +155,21 @@ export default function Layout() {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/"}
+                onClick={(e) => {
+                  if (item.to === "/chatbot") {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("open-chatbot"));
+                  }
+                }}
                 className={({ isActive }) =>
-                  `inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-bold transition ${
+                  `inline-flex min-h-9 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                     isActive
-                      ? "bg-brand-700 text-white shadow-sm"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800"
+                      ? "bg-cyan-600 text-white shadow-sm"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-800"
                   }`
                 }
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
                 {item.label}
               </NavLink>
             );
@@ -154,7 +177,7 @@ export default function Layout() {
         </nav>
       </header>
 
-      <main id="app-content" tabIndex={-1} className="min-w-0 lg:pl-72">
+      <main id="app-content" tabIndex={-1} className="min-w-0 lg:pl-72 bg-dot-pattern min-h-screen">
         <div className="mx-auto min-w-0 max-w-[1480px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />
         </div>

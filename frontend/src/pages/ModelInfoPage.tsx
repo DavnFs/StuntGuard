@@ -94,20 +94,24 @@ export default function ModelInfoPage() {
         {bestMetrics ? (
           <div className="mt-4 grid gap-4 md:grid-cols-4">
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">Accuracy</p>
+              <p className="text-xs font-bold text-slate-500">Accuracy (Akurasi)</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.accuracy)}</p>
+              <p className="text-[10px] text-slate-400 mt-1">Ketepatan tebakan model secara keseluruhan.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">Macro Precision</p>
+              <p className="text-xs font-bold text-slate-500">Macro Precision (Presisi)</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.macro_precision)}</p>
+              <p className="text-[10px] text-slate-400 mt-1">Kecocokan hasil prediksi stunting dengan kondisi asli.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">Macro Recall</p>
+              <p className="text-xs font-bold text-slate-500">Macro Recall (Kepekaan)</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.macro_recall)}</p>
+              <p className="text-[10px] text-slate-400 mt-1">Kemampuan model menemukan semua balita berisiko.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="text-sm text-slate-500">Macro F1</p>
+              <p className="text-xs font-bold text-slate-500">Macro F1 (Skor F1)</p>
               <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(bestMetrics.macro_f1)}</p>
+              <p className="text-[10px] text-slate-400 mt-1">Keseimbangan antara akurasi tebakan dan kepekaan.</p>
             </div>
           </div>
         ) : (
@@ -156,7 +160,7 @@ export default function ModelInfoPage() {
       <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
         <h3 className="text-base font-semibold text-slate-950">Catatan Dataset dan Batasan</h3>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Dataset menggunakan usia, gender, tinggi badan, dan berat badan sebagai fitur. Label status gizi kemungkinan sangat berkaitan dengan aturan antropometri atau standar pertumbuhan. Karena itu model cocok untuk demonstrasi skrining awal, bukan diagnosis medis lengkap. Faktor lain seperti riwayat penyakit, prematuritas, pola makan, sanitasi, dan pemeriksaan klinis belum digunakan.
+          Dataset menggunakan usia, jenis kelamin, tinggi badan, dan berat badan. Label status gizi kemungkinan sangat berkaitan dengan aturan ukuran tubuh standar WHO atau standar pertumbuhan. Karena itu model cocok untuk demonstrasi skrining awal, bukan diagnosis medis lengkap. Faktor lain seperti riwayat penyakit, lahir prematur, pola makan, sanitasi, dan pemeriksaan klinis belum digunakan.
         </p>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">
           {info.limitations.map((item) => (
