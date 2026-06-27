@@ -49,3 +49,19 @@ export default function StatusBadge({ value, type = "status" }: StatusBadgeProps
     </span>
   );
 }
+
+export const kmsStatusStyles: Record<string, string> = {
+  "Gizi Kurang": "bg-red-100 text-red-700 ring-red-200",
+  Normal: "bg-emerald-100 text-emerald-700 ring-emerald-200",
+  "Gizi Lebih": "bg-amber-100 text-amber-700 ring-amber-200",
+  Obesitas: "bg-orange-100 text-orange-700 ring-orange-200",
+};
+
+export function KmsStatusBadge({ value }: { value: string }) {
+  const style = kmsStatusStyles[value] ?? "bg-slate-100 text-slate-700 ring-slate-200";
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${style}`}>
+      {value}
+    </span>
+  );
+}

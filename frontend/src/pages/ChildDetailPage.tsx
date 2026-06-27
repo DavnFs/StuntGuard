@@ -1,24 +1,12 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarPlus, LineChart as LineChartIcon, MessageSquareText, Ruler } from "lucide-react";
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { ArrowLeft, CalendarPlus, LineChart as LineChartIcon, Ruler } from "lucide-react";
 
 import { ErrorBlock, LoadingBlock, SuccessBlock } from "../components/StateBlock";
-import StatusBadge from "../components/StatusBadge";
+import { KmsStatusBadge } from "../components/StatusBadge";
+import { KmsChart } from "../components/KmsChart";
 import { api } from "../services/api";
 import type { Child, Measurement, MeasurementInput } from "../types";
-
-const DISCLAIMER =
-  "Hasil ini hanya untuk skrining awal dan pendukung keputusan. Diagnosis dan intervensi resmi harus dikonsultasikan dengan tenaga kesehatan atau Puskesmas.";
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -64,31 +52,6 @@ export default function ChildDetailPage() {
       setLoading(false);
     }
   }, [childId]);
-
-  const chartData = useMemo(() => {
-    if (!child) return [];
-    return measurements.map((item) => {
-      const genderAdjustment = child.gender === "male" ? 0.8 : 0.0;
-      let expectedHeight = 0;
-      let expectedWeight = 0;
-      if (item.age_month <= 24) {
-        expectedHeight = 50.0 + (item.age_month * 1.55) + genderAdjustment;
-        expectedWeight = 3.2 + (item.age_month * 0.32);
-      } else {
-        expectedHeight = 87.0 + ((item.age_month - 24) * 0.62) + genderAdjustment;
-        expectedWeight = 10.8 + ((item.age_month - 24) * 0.18);
-      }
-
-      return {
-        age_month: item.age_month,
-        height_cm: item.height_cm,
-        weight_kg: item.weight_kg,
-        expected_height: Math.round(expectedHeight * 10) / 10,
-        expected_weight: Math.round(expectedWeight * 10) / 10,
-        status: item.predicted_status,
-      };
-    });
-  }, [measurements, child]);
 
   const submitMeasurement = async (event: FormEvent) => {
     event.preventDefault();
@@ -139,32 +102,33 @@ export default function ChildDetailPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-4">
             <LineChartIcon className="h-5 w-5 text-brand-700" />
-            <h3 className="text-base font-semibold text-slate-950">Tren Tinggi dan Berat Badan</h3>
+            <h3 className="text-base font-semibold text-slate-950">Grafik Pertumbuhan StuntGuard</h3>
           </div>
-          <div className="mt-4 h-80">
-            <ResponsiveContainer>
-              <LineChart data={chartData}>
-                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="age_month" label={{ value: "Usia (bulan)", position: "insideBottom", offset: -2 }} />
-                <YAxis yAxisId="height" dataKey="height_cm" label={{ value: "cm", angle: -90, position: "insideLeft" }} />
-                <YAxis yAxisId="weight" orientation="right" dataKey="weight_kg" label={{ value: "kg", angle: 90, position: "insideRight" }} />
-                <Tooltip />
-                <Legend />
-                <Line yAxisId="height" type="monotone" dataKey="height_cm" name="Tinggi Badan (cm)" stroke="var(--chart-normal)" strokeWidth={3} activeDot={{ r: 6 }} />
-                <Line yAxisId="height" type="monotone" dataKey="expected_height" name="Standar Tinggi WHO (cm)" stroke="var(--chart-normal)" strokeWidth={1.5} strokeDasharray="4 4" strokeOpacity={0.6} dot={false} />
-                <Line yAxisId="weight" type="monotone" dataKey="weight_kg" name="Berat Badan (kg)" stroke="var(--chart-watch)" strokeWidth={3} activeDot={{ r: 6 }} />
-                <Line yAxisId="weight" type="monotone" dataKey="expected_weight" name="Standar Berat WHO (kg)" stroke="var(--chart-watch)" strokeWidth={1.5} strokeDasharray="4 4" strokeOpacity={0.6} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          
+          {measurements.length === 0 ? (
+            <div className="flex h-80 items-center justify-center rounded-xl border-2 border-dashed border-slate-200">
+              <p className="text-sm text-slate-500">Belum ada data pengukuran.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-3 mb-4 text-xs font-medium">
+                <span className="flex items-center gap-1.5"><span className="h-3 w-6 rounded bg-[#fee2e2] border border-red-200" /> BGM (Garis Merah)</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-6 rounded bg-[#fef9c3] border border-yellow-200" /> Kurang</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-6 rounded bg-[#dcfce7] border border-green-200" /> Normal</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-6 rounded bg-[#fff7ed] border border-orange-200" /> Lebih</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-6 rounded bg-slate-900" /> Berat Anak</span>
+              </div>
+              <KmsChart measurements={measurements} />
+            </>
+          )}
         </section>
 
         <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
           <div className="flex items-center gap-2">
             <CalendarPlus className="h-5 w-5 text-brand-700" />
-            <h3 className="text-base font-semibold text-slate-950">Tambah Pemeriksaan</h3>
+            <h3 className="text-base font-semibold text-slate-950">Tambah Catatan Pertumbuhan</h3>
           </div>
           <form className="mt-4 space-y-4" onSubmit={submitMeasurement}>
             <label className="block text-sm font-medium text-slate-700">
@@ -222,33 +186,27 @@ export default function ChildDetailPage() {
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-care-600 px-4 py-2 text-sm font-semibold text-white hover:bg-care-700 disabled:opacity-60"
             >
               <Ruler className="h-4 w-4" />
-              {saving ? "Memproses..." : "Simpan & Prediksi"}
+              {saving ? "Memproses..." : "Simpan Catatan Pertumbuhan"}
             </button>
           </form>
 
           {latestResult ? (
             <div className="mt-5 rounded-lg border border-brand-100 bg-brand-50 p-4">
+              <p className="text-sm font-semibold text-slate-800 mb-2">Hasil Pemeriksaan Bulan Ini:</p>
               <div className="flex flex-wrap gap-2">
-                <StatusBadge value={latestResult.predicted_status} />
-                <StatusBadge value={latestResult.risk_level} type="risk" />
+                <KmsStatusBadge value={latestResult.kms_status} />
               </div>
-              <p className="mt-3 text-sm text-slate-700">{latestResult.recommendation}</p>
-              <p className="mt-2 text-xs font-semibold text-slate-600">Mode model: {latestResult.model_mode}</p>
-              <Link
-                to="/app/consultations"
-                className="mt-3 inline-flex items-center gap-2 rounded-lg border border-care-600 px-3 py-2 text-xs font-semibold text-care-700 hover:bg-care-50"
-              >
-                <MessageSquareText className="h-3.5 w-3.5" />
-                Ajukan Konsultasi
-              </Link>
-              <p className="mt-3 text-xs text-slate-500">{DISCLAIMER}</p>
+              <p className="mt-3 text-sm text-slate-700">
+                Silakan rujuk grafik pertumbuhan untuk melihat detail jalur pertumbuhan anak Anda.
+                Jika berada di bawah garis merah, segera konsultasikan ke Posyandu.
+              </p>
             </div>
           ) : null}
         </section>
       </div>
 
       <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
-        <h3 className="text-base font-semibold text-slate-950">Riwayat Pemeriksaan</h3>
+        <h3 className="text-base font-semibold text-slate-950">Riwayat Pertumbuhan</h3>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead>
@@ -257,30 +215,24 @@ export default function ChildDetailPage() {
                 <th className="py-3 pr-4 font-semibold">Usia</th>
                 <th className="py-3 pr-4 font-semibold">Tinggi</th>
                 <th className="py-3 pr-4 font-semibold">Berat</th>
-                <th className="py-3 pr-4 font-semibold">Status</th>
-                <th className="py-3 pr-4 font-semibold">Risiko</th>
-                <th className="py-3 pr-4 font-semibold">Model</th>
-                <th className="py-3 pr-4 font-semibold">Rekomendasi</th>
+                <th className="py-3 pr-4 font-semibold">Status Pertumbuhan</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {measurements.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-5 text-center text-slate-500">
+                  <td colSpan={5} className="py-5 text-center text-slate-500">
                     Belum ada pemeriksaan.
                   </td>
                 </tr>
               ) : (
-                measurements.map((item) => (
+                [...measurements].reverse().map((item) => (
                   <tr key={item.id}>
                     <td className="py-3 pr-4 text-slate-600">{new Date(item.measurement_date).toLocaleDateString("id-ID")}</td>
                     <td className="py-3 pr-4 text-slate-600">{item.age_month} bulan</td>
                     <td className="py-3 pr-4 text-slate-600">{item.height_cm} cm</td>
-                    <td className="py-3 pr-4 text-slate-600">{item.weight_kg ?? "-"} kg</td>
-                    <td className="py-3 pr-4"><StatusBadge value={item.predicted_status} /></td>
-                    <td className="py-3 pr-4"><StatusBadge value={item.risk_level} type="risk" /></td>
-                    <td className="py-3 pr-4 text-xs text-slate-600">{item.model_mode}</td>
-                    <td className="max-w-md py-3 pr-4 text-slate-600">{item.recommendation}</td>
+                    <td className="py-3 pr-4 text-slate-600 font-semibold">{item.weight_kg ?? "-"} kg</td>
+                    <td className="py-3 pr-4"><KmsStatusBadge value={item.kms_status} /></td>
                   </tr>
                 ))
               )}

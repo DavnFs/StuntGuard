@@ -56,13 +56,7 @@ def _demo_users() -> dict[str, DemoUser]:
         role="parent",
         password=os.getenv("DEMO_PARENT_PASSWORD", "password"),
     )
-    admin = DemoUser(
-        email="admin@demo.com",
-        name="Admin Posyandu",
-        role="admin",
-        password=os.getenv("DEMO_ADMIN_PASSWORD", "password"),
-    )
-    return {parent.email: parent, admin.email: admin}
+    return {parent.email: parent}
 
 
 def authenticate_demo_user(email: str, password: str) -> DemoUser | None:
@@ -165,15 +159,6 @@ def require_current_user(
     return current_user
 
 
-def require_admin(
-    current_user: AuthenticatedUser = Depends(require_current_user),
-) -> AuthenticatedUser:
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Akses ini hanya tersedia untuk petugas.",
-        )
-    return current_user
 
 
 def ensure_login_attempt_allowed(request: Request) -> None:

@@ -53,8 +53,6 @@ def delete_child(db: Session, child: models.Child) -> None:
     db.commit()
 
 
-def list_measurements(db: Session) -> list[models.Measurement]:
-    return db.query(models.Measurement).order_by(models.Measurement.measurement_date.desc()).all()
 
 
 def list_child_measurements(db: Session, child_id: int) -> list[models.Measurement]:
@@ -70,6 +68,18 @@ def get_measurement(db: Session, measurement_id: int) -> Optional[models.Measure
     return db.query(models.Measurement).filter(models.Measurement.id == measurement_id).first()
 
 
+def _compute_kms_status(prediction: schemas.PredictionResponse) -> str:
+    """Map ML prediction to KMS status categories."""
+    status = prediction.nutrition_status
+    if status in ("severely stunted", "stunted"):
+        return "Gizi Kurang"
+    elif status == "normal":
+        return "Normal"
+    elif status == "tall":
+        return "Gizi Lebih"
+    return "Normal"
+
+
 def create_measurement(
     db: Session,
     child_id: int,
@@ -82,6 +92,7 @@ def create_measurement(
         age_month=payload.age_month,
         height_cm=payload.height_cm,
         weight_kg=payload.weight_kg,
+        kms_status=_compute_kms_status(prediction),
         predicted_status=prediction.nutrition_status,
         risk_level=prediction.risk_level,
         confidence=prediction.confidence,
@@ -94,9 +105,6 @@ def create_measurement(
     return measurement
 
 
-def delete_measurement(db: Session, measurement: models.Measurement) -> None:
-    db.delete(measurement)
-    db.commit()
 
 
 def list_consultations(
@@ -131,26 +139,3 @@ def create_consultation(
     return ticket
 
 
-def reply_consultation(
-    db: Session,
-    ticket: models.ConsultationTicket,
-    payload: schemas.ConsultationReply,
-) -> models.ConsultationTicket:
-    ticket.admin_reply = payload.reply
-    ticket.status = payload.status
-    db.add(ticket)
-    db.commit()
-    db.refresh(ticket)
-    return ticket
-
-
-def update_consultation_status(
-    db: Session,
-    ticket: models.ConsultationTicket,
-    payload: schemas.ConsultationStatusUpdate,
-) -> models.ConsultationTicket:
-    ticket.status = payload.status
-    db.add(ticket)
-    db.commit()
-    db.refresh(ticket)
-    return ticket

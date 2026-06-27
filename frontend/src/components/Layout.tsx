@@ -1,9 +1,7 @@
 import {
-  Activity,
   Bot,
   BrainCircuit,
   ClipboardPlus,
-  ClipboardList,
   LogOut,
   LayoutDashboard,
   MessageSquareText,
@@ -14,30 +12,18 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { clearCurrentUser, getCurrentUser } from "../services/auth";
 
-function getNavItems(role?: string) {
-  if (role === "admin") {
-    return [
-      { to: "/app/admin", label: "Dashboard Petugas", icon: LayoutDashboard },
-      { to: "/app/children", label: "Data Balita", icon: Users },
-      { to: "/app/measurements", label: "Data Pemeriksaan", icon: ClipboardList },
-      { to: "/app/consultations", label: "Konsultasi", icon: MessageSquareText },
-      { to: "/app/model", label: "Tentang Model", icon: BrainCircuit },
-    ];
-  }
+function getNavItems() {
   return [
-    { to: "/app/parent", label: "Beranda", icon: LayoutDashboard },
-    { to: "/app/children", label: "Riwayat Anak", icon: Users },
-    { to: "/app/predict", label: "Prediksi Cepat", icon: ClipboardPlus },
-    { to: "/app/consultations", label: "Konsultasi", icon: MessageSquareText },
-    { to: "/chatbot", label: "Edukasi Gizi", icon: Bot },
-    { to: "/app/model", label: "Tentang Model", icon: BrainCircuit },
+    { to: "/app/parent", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/app/children", label: "Data Anak", icon: Users },
+    { to: "/app/chatbot", label: "Asisten AI", icon: Bot },
   ];
 }
 
 export default function Layout() {
   const navigate = useNavigate();
   const user = getCurrentUser();
-  const navItems = getNavItems(user?.role);
+  const navItems = getNavItems();
 
   const logout = () => {
     clearCurrentUser();
@@ -63,7 +49,6 @@ export default function Layout() {
           <div>
             <h1 className="font-heading text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
               StuntGuard
-              <span className="inline-flex rounded-md bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-400 border border-cyan-500/20">SaaS</span>
             </h1>
             <p className="text-[10px] font-medium text-slate-400">Tumbuh terpantau, langkah terarah</p>
           </div>
@@ -77,12 +62,6 @@ export default function Layout() {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/"}
-                onClick={(e) => {
-                  if (item.to === "/chatbot") {
-                    e.preventDefault();
-                    window.dispatchEvent(new CustomEvent("open-chatbot"));
-                  }
-                }}
                 className={({ isActive }) =>
                   `group flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition duration-300 relative ${
                     isActive
@@ -104,7 +83,7 @@ export default function Layout() {
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <p className="font-bold text-white">{user?.name ?? "Demo User"}</p>
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">{user?.role === "admin" ? "Admin / Petugas Kesehatan" : "Orang Tua / Wali"}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Orang Tua / Wali</p>
             <button
               type="button"
               onClick={logout}
@@ -134,7 +113,7 @@ export default function Layout() {
             <span>
               <span className="block font-heading text-sm font-bold text-slate-950">StuntGuard</span>
               <span className="block text-[9px] font-bold uppercase tracking-[0.12em] text-cyan-600">
-                {user?.role === "admin" ? "Petugas" : "Orang tua"}
+                Orang tua
               </span>
             </span>
           </div>
@@ -155,12 +134,6 @@ export default function Layout() {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/"}
-                onClick={(e) => {
-                  if (item.to === "/chatbot") {
-                    e.preventDefault();
-                    window.dispatchEvent(new CustomEvent("open-chatbot"));
-                  }
-                }}
                 className={({ isActive }) =>
                   `inline-flex min-h-9 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                     isActive

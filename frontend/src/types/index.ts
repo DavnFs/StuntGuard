@@ -2,8 +2,9 @@ export type Gender = "male" | "female";
 export type NutritionStatus = "severely stunted" | "stunted" | "normal" | "tall";
 export type RiskLevel = "high" | "medium" | "low" | "monitor";
 export type ModelMode = "full-growth-model" | "height-only-fallback-model" | "rule-based-fallback";
-export type UserRole = "parent" | "admin";
+export type UserRole = "parent" | "guest";
 export type ConsultationStatus = "pending" | "answered" | "closed";
+export type KmsStatus = "Gizi Kurang" | "Normal" | "Gizi Lebih" | "Obesitas";
 
 export interface Child {
   id: number;
@@ -88,6 +89,7 @@ export interface Measurement {
   age_month: number;
   height_cm: number;
   weight_kg: number | null;
+  kms_status: KmsStatus;
   predicted_status: NutritionStatus;
   risk_level: RiskLevel;
   confidence: number | null;
@@ -96,32 +98,7 @@ export interface Measurement {
   created_at: string;
 }
 
-export interface RecentHighRiskCase {
-  child_id: number;
-  child_name: string;
-  posyandu_area?: string | null;
-  measurement_date: string;
-  age_month: number;
-  height_cm: number;
-  weight_kg: number | null;
-  predicted_status: NutritionStatus;
-  risk_level: RiskLevel;
-}
 
-export interface DashboardSummary {
-  total_children: number;
-  total_measurements: number;
-  count_by_nutrition_status: Record<NutritionStatus, number>;
-  stunting_percentage: number;
-  count_by_gender: Record<Gender, number>;
-  status_by_gender: Array<Record<string, number | string>>;
-  count_by_posyandu_area: Record<string, number>;
-  monthly_measurement_trend: Array<{ month: string; count: number }>;
-  recent_high_risk_cases: RecentHighRiskCase[];
-  average_height_by_age_group: Array<{ age_group: string; average_height_cm: number }>;
-  average_weight_by_age_group: Array<{ age_group: string; average_weight_kg: number }>;
-  high_risk_children_count: number;
-}
 
 export interface ChatResponse {
   reply: string;
@@ -200,4 +177,24 @@ export interface ConsultationInput {
   subject: string;
   message: string;
   latest_measurement_id?: number | null;
+}
+
+export interface MeasurementBrief {
+  id: number;
+  measurement_date: string;
+  age_month: number;
+  height_cm: number;
+  weight_kg: number | null;
+  kms_status: KmsStatus;
+  predicted_status: NutritionStatus;
+  created_at: string;
+}
+
+export interface ChildWithMeasurements extends Child {
+  measurements: MeasurementBrief[];
+}
+
+export interface ParentDashboardResponse {
+  parent_name: string;
+  children: ChildWithMeasurements[];
 }

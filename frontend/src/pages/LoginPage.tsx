@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Activity, ArrowLeft, Baby, CheckCircle2, HeartPulse, LogIn, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, HeartPulse, LogIn, ShieldCheck, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { ErrorBlock } from "../components/StateBlock";
@@ -20,7 +20,7 @@ export default function LoginPage() {
     try {
       const user = await api.login({ email, password });
       saveCurrentUser(user);
-      navigate(user.role === "admin" ? "/app/admin" : "/app/parent", { replace: true });
+      navigate("/app/parent", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login gagal");
     } finally {
@@ -36,7 +36,7 @@ export default function LoginPage() {
     try {
       const user = await api.login({ email: selectedEmail, password: "password" });
       saveCurrentUser(user);
-      navigate(user.role === "admin" ? "/app/admin" : "/app/parent", { replace: true });
+      navigate("/app/parent", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login gagal");
     } finally {
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
             <h2 className="mt-4 font-heading text-3xl font-extrabold text-slate-950">Selamat Datang</h2>
             <p className="mt-1.5 text-xs text-slate-500">
-              Gunakan akun demo di bawah ini untuk menjelajahi dashboard Posyandu & Orang Tua.
+              Gunakan akun demo di bawah ini untuk menjelajahi StuntGuard & pantau tumbuh kembang anak.
             </p>
 
             {error ? <div className="mt-5"><ErrorBlock message={error} /></div> : null}
@@ -180,14 +180,6 @@ export default function LoginPage() {
                 >
                   <span className="font-semibold text-slate-500 group-hover:text-cyan-700">Orang Tua:</span>
                   <span className="font-bold text-slate-800 group-hover:text-cyan-600">parent@demo.com</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin("admin@demo.com")}
-                  className="flex w-full justify-between items-center hover:bg-cyan-50/50 p-2 rounded-lg transition text-left group"
-                >
-                  <span className="font-semibold text-slate-500 group-hover:text-cyan-700">Petugas / Admin:</span>
-                  <span className="font-bold text-slate-800 group-hover:text-cyan-600">admin@demo.com</span>
                 </button>
                 <div className="flex justify-between border-t border-slate-100 pt-2 mt-1 px-2">
                   <span className="font-medium text-slate-400">Kata Sandi:</span>

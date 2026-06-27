@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
 from app.database import get_db
 from app.ml.predict import predict_nutrition
-from app.services.authentication import AuthenticatedUser, require_admin, require_current_user
+from app.services.authentication import AuthenticatedUser, require_current_user
 
 
 router = APIRouter(tags=["measurements"])
@@ -47,22 +47,3 @@ def create_child_measurement(
     return crud.create_measurement(db, child_id, payload, prediction)
 
 
-@router.get("/measurements", response_model=list[schemas.MeasurementRead])
-def get_measurements(
-    _current_user: AuthenticatedUser = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    return crud.list_measurements(db)
-
-
-@router.delete("/measurements/{measurement_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_measurement(
-    measurement_id: int,
-    _current_user: AuthenticatedUser = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    measurement = crud.get_measurement(db, measurement_id)
-    if measurement is None:
-        raise HTTPException(status_code=404, detail="Measurement not found")
-    crud.delete_measurement(db, measurement)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import ChatbotPopup from "../components/ChatbotPopup";
 import PredictionResultCard from "../components/PredictionResultCard";
 import { ErrorBlock } from "../components/StateBlock";
 import { api } from "../services/api";
@@ -750,6 +751,7 @@ export default function LandingPage() {
           <p>© 2026 StuntGuard. Hak cipta dilindungi undang-undang. Skrining edukatif tumbuh kembang anak.</p>
         </div>
       </footer>
+      <ChatbotPopup />
     </main>
   );
 }

@@ -9,7 +9,7 @@ function isAuthUser(value: unknown): value is AuthUser {
     typeof user.token === "string" &&
     typeof user.email === "string" &&
     typeof user.name === "string" &&
-    (user.role === "parent" || user.role === "admin") &&
+    (user.role === "parent" || user.role === "guest") &&
     typeof user.expires_at === "number" &&
     user.expires_at > Date.now() / 1000
   );

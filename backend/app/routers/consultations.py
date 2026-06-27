@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.database import get_db
-from app.services.authentication import AuthenticatedUser, require_admin, require_current_user
+from app.services.authentication import AuthenticatedUser, require_current_user
 
 
 router = APIRouter(prefix="/consultations", tags=["consultations"])
@@ -18,7 +18,6 @@ def _to_read(ticket: models.ConsultationTicket) -> schemas.ConsultationRead:
         message=ticket.message,
         latest_measurement_id=ticket.latest_measurement_id,
         status=ticket.status,
-        admin_reply=ticket.admin_reply,
         created_at=ticket.created_at,
         updated_at=ticket.updated_at,
     )
@@ -52,27 +51,3 @@ def create_consultation(
     return _to_read(crud.create_consultation(db, payload))
 
 
-@router.post("/{consultation_id}/reply", response_model=schemas.ConsultationRead)
-def reply_consultation(
-    consultation_id: int,
-    payload: schemas.ConsultationReply,
-    _current_user: AuthenticatedUser = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    ticket = crud.get_consultation(db, consultation_id)
-    if ticket is None:
-        raise HTTPException(status_code=404, detail="Consultation ticket not found")
-    return _to_read(crud.reply_consultation(db, ticket, payload))
-
-
-@router.patch("/{consultation_id}/status", response_model=schemas.ConsultationRead)
-def update_consultation_status(
-    consultation_id: int,
-    payload: schemas.ConsultationStatusUpdate,
-    _current_user: AuthenticatedUser = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    ticket = crud.get_consultation(db, consultation_id)
-    if ticket is None:
-        raise HTTPException(status_code=404, detail="Consultation ticket not found")
-    return _to_read(crud.update_consultation_status(db, ticket, payload))

@@ -34,6 +34,7 @@ class Measurement(Base):
     age_month = Column(Integer, nullable=False)
     height_cm = Column(Float, nullable=False)
     weight_kg = Column(Float, nullable=True)
+    kms_status = Column(String(20), nullable=False, default="Normal", index=True)
     predicted_status = Column(String(40), nullable=False, index=True)
     risk_level = Column(String(20), nullable=False, index=True)
     confidence = Column(Float, nullable=True)

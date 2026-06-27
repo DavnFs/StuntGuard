@@ -1,10 +1,8 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Bot, ShieldCheck, Send, UserRound, X, MessageSquare, Sparkles } from "lucide-react";
+import { Bot, ShieldCheck, Send, UserRound, X, Sparkles } from "lucide-react";
 
 import { ErrorBlock } from "./StateBlock";
 import { api } from "../services/api";
-import { getCurrentUser } from "../services/auth";
 import type { ChatChildContext, ChatResponse } from "../types";
 
 interface Message {
@@ -34,9 +32,6 @@ function contextLabel(context?: ChatChildContext | null) {
 }
 
 export default function ChatbotPopup() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const user = getCurrentUser();
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -85,15 +80,6 @@ export default function ChatbotPopup() {
     window.addEventListener("open-chatbot", handleOpen);
     return () => window.removeEventListener("open-chatbot", handleOpen);
   }, []);
-
-  // Listen to /chatbot path and intercept
-  useEffect(() => {
-    if (location.pathname === "/chatbot") {
-      setIsOpen(true);
-      const targetPath = user ? (user.role === "admin" ? "/app/admin" : "/app/parent") : "/";
-      navigate(targetPath, { replace: true });
-    }
-  }, [location.pathname, user, navigate]);
 
   const ask = async (message: string) => {
     if (!message.trim()) return;

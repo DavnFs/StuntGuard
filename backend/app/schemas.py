@@ -8,8 +8,9 @@ Gender = Literal["male", "female"]
 NutritionStatus = Literal["severely stunted", "stunted", "normal", "tall"]
 RiskLevel = Literal["high", "medium", "low", "monitor"]
 ModelMode = Literal["full-growth-model", "height-only-fallback-model", "rule-based-fallback"]
-UserRole = Literal["parent", "admin"]
+UserRole = Literal["parent", "guest"]
 ConsultationStatus = Literal["pending", "answered", "closed"]
+KmsStatus = Literal["Gizi Kurang", "Normal", "Gizi Lebih", "Obesitas"]
 
 
 def _strip_required(value: str) -> str:
@@ -162,6 +163,7 @@ class MeasurementRead(BaseModel):
     age_month: int
     height_cm: float
     weight_kg: Optional[float]
+    kms_status: str
     predicted_status: NutritionStatus
     risk_level: RiskLevel
     confidence: Optional[float]
@@ -170,31 +172,6 @@ class MeasurementRead(BaseModel):
     created_at: datetime
 
 
-class RecentHighRiskCase(BaseModel):
-    child_id: int
-    child_name: str
-    posyandu_area: Optional[str]
-    measurement_date: date
-    age_month: int
-    height_cm: float
-    weight_kg: Optional[float]
-    predicted_status: NutritionStatus
-    risk_level: RiskLevel
-
-
-class DashboardSummary(BaseModel):
-    total_children: int
-    total_measurements: int
-    count_by_nutrition_status: Dict[str, int]
-    stunting_percentage: float
-    count_by_gender: Dict[str, int]
-    status_by_gender: List[Dict[str, Any]]
-    count_by_posyandu_area: Dict[str, int]
-    monthly_measurement_trend: List[Dict[str, Any]]
-    recent_high_risk_cases: List[RecentHighRiskCase]
-    average_height_by_age_group: List[Dict[str, Any]]
-    average_weight_by_age_group: List[Dict[str, Any]]
-    high_risk_children_count: int
 
 
 class ChatGrowthComparison(BaseModel):
@@ -293,18 +270,7 @@ class ConsultationCreate(BaseModel):
         return _strip_required(value)
 
 
-class ConsultationReply(BaseModel):
-    reply: str = Field(..., min_length=3, max_length=2000)
-    status: ConsultationStatus = "answered"
 
-    @field_validator("reply", mode="before")
-    @classmethod
-    def strip_reply(cls, value: str) -> str:
-        return _strip_required(value)
-
-
-class ConsultationStatusUpdate(BaseModel):
-    status: ConsultationStatus
 
 
 class ConsultationRead(BaseModel):
@@ -317,6 +283,26 @@ class ConsultationRead(BaseModel):
     message: str
     latest_measurement_id: Optional[int]
     status: ConsultationStatus
-    admin_reply: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+
+class MeasurementBrief(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    measurement_date: date
+    age_month: int
+    height_cm: float
+    weight_kg: Optional[float]
+    kms_status: str
+    predicted_status: NutritionStatus
+    created_at: datetime
+
+
+class ChildWithMeasurements(ChildRead):
+    measurements: List[MeasurementBrief] = []
+
+
+class ParentDashboardResponse(BaseModel):
+    parent_name: str
+    children: List[ChildWithMeasurements]

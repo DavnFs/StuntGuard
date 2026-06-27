@@ -7,11 +7,11 @@ import type {
   Consultation,
   ConsultationInput,
   ConsultationStatus,
-  DashboardSummary,
   LoginRequest,
   Measurement,
   MeasurementInput,
   ModelInfo,
+  ParentDashboardResponse,
   PredictionRequest,
   PredictionResponse,
 } from "../types";
@@ -81,7 +81,7 @@ export const api = {
   health: () => apiRequest<{ status: string; service: string }>("/health"),
   login: (payload: LoginRequest) =>
     apiRequest<AuthUser>("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
-  getDashboard: () => apiRequest<DashboardSummary>("/dashboard/summary"),
+  getParentDashboard: () => apiRequest<ParentDashboardResponse>("/parent/dashboard"),
   getChildren: (search?: string) => {
     const query = search ? `?search=${encodeURIComponent(search)}` : "";
     return apiRequest<Child[]>(`/children${query}`);
@@ -94,7 +94,7 @@ export const api = {
   getChild: (id: number) => apiRequest<Child>(`/children/${id}`),
   getMeasurements: (childId: number) =>
     apiRequest<Measurement[]>(`/children/${childId}/measurements`),
-  getAllMeasurements: () => apiRequest<Measurement[]>("/measurements"),
+
   createMeasurement: (childId: number, payload: MeasurementInput) =>
     apiRequest<Measurement>(`/children/${childId}/measurements`, {
       method: "POST",
@@ -119,14 +119,5 @@ export const api = {
   },
   createConsultation: (payload: ConsultationInput) =>
     apiRequest<Consultation>("/consultations", { method: "POST", body: JSON.stringify(payload) }),
-  replyConsultation: (id: number, reply: string, status: ConsultationStatus = "answered") =>
-    apiRequest<Consultation>(`/consultations/${id}/reply`, {
-      method: "POST",
-      body: JSON.stringify({ reply, status }),
-    }),
-  updateConsultationStatus: (id: number, status: ConsultationStatus) =>
-    apiRequest<Consultation>(`/consultations/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    }),
+
 };
