@@ -7,7 +7,6 @@ import {
   RotateCcw,
   Save,
   Soup,
-  UserPlus,
   Utensils,
   TrendingUp,
   Activity,
@@ -512,10 +511,6 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
                     <MessageCircle className="h-4 w-4" />
                     Konsultasi Asisten AI Gizi
                   </Link>
-                  <Link to="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-cyan-600 bg-white px-5 text-xs font-bold text-cyan-700 hover:bg-cyan-50 transition">
-                    <UserPlus className="h-4 w-4" />
-                    Daftar Akun Posyandu
-                  </Link>
                   <Link to="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-350 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
                     <Save className="h-4 w-4" />
                     Simpan Riwayat Pertumbuhan
@@ -642,7 +637,7 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
           <div className="space-y-6">
             <div className="rounded-2xl border border-cyan-500/10 bg-cyan-500/[0.01] p-4 flex gap-3 items-start text-xs text-cyan-800 leading-normal">
               <Info className="h-4.5 w-4.5 shrink-0 text-cyan-600 mt-0.5" />
-              <p>Informasi di bawah ini ditujukan sebagai pendukung keputusan klinis bagi kader Posyandu/petugas kesehatan Puskesmas. Data bersumber dari parameter kurva pertumbuhan anak laki-laki dan perempuan WHO (2006).</p>
+              <p>Informasi di bawah ini ditujukan sebagai pendukung keputusan klinis bagi petugas kesehatan Puskesmas. Data bersumber dari parameter kurva pertumbuhan anak laki-laki dan perempuan WHO (2006).</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -80,7 +80,7 @@ export default function LoginPage() {
               Kawal Tumbuh Kembang dengan Langkah Nyata.
             </h1>
             <p className="mt-4 text-sm leading-relaxed text-slate-300">
-              Pantau riwayat tinggi & berat badan anak secara detail, lihat grafik pertumbuhan berkala, dan konsultasikan status gizi ke petugas Posyandu dengan mudah.
+              Pantau riwayat tinggi & berat badan anak secara detail, lihat grafik pertumbuhan berkala, dan dapatkan edukasi gizi tumbuh kembang dengan mudah.
             </p>
 
             {/* Graphics bar */}

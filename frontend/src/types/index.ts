@@ -13,7 +13,6 @@ export interface Child {
   birth_date: string;
   parent_name?: string | null;
   address?: string | null;
-  posyandu_area?: string | null;
   created_at: string;
 }
 
@@ -23,7 +22,6 @@ export interface ChildInput {
   birth_date: string;
   parent_name?: string;
   address?: string;
-  posyandu_area?: string;
 }
 
 export interface PredictionRequest {

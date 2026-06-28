@@ -94,7 +94,6 @@ export default function ChildDetailPage() {
           </div>
           <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 md:text-right">
             <span>Orang tua: {child.parent_name || "-"}</span>
-            <span>Wilayah: {child.posyandu_area || "-"}</span>
             <span className="sm:col-span-2">Alamat demo: {child.address || "-"}</span>
           </div>
         </div>
@@ -198,7 +197,7 @@ export default function ChildDetailPage() {
               </div>
               <p className="mt-3 text-sm text-slate-700">
                 Silakan rujuk grafik pertumbuhan untuk melihat detail jalur pertumbuhan anak Anda.
-                Jika berada di bawah garis merah, segera konsultasikan ke Posyandu.
+                Jika berada di bawah garis merah, segera konsultasikan ke tenaga kesehatan.
               </p>
             </div>
           ) : null}

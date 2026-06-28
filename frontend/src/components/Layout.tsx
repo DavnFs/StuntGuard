@@ -98,7 +98,7 @@ export default function Layout() {
               <ShieldCheck className="h-4 w-4 shrink-0 text-amber-400" />
               <span>Pemberitahuan</span>
             </div>
-            Hasil aplikasi adalah skrining awal & edukasi gizi. Diagnosis resmi tetap melalui Posyandu/Puskesmas.
+            Hasil aplikasi adalah skrining awal & edukasi gizi. Diagnosis resmi tetap melalui Puskesmas atau tenaga kesehatan.
           </div>
         </div>
       </aside>

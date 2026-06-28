@@ -25,7 +25,7 @@ const KMS_BANNER: Record<string, { bg: string; border: string; icon: typeof Chec
     icon: CheckCircle2,
     iconColor: "text-emerald-600",
     title: "Pertumbuhan Sesuai Jalur StuntGuard ✅",
-    message: "Grafik bulan ini bagus! Pertumbuhan anak Anda sesuai jalur StuntGuard. Terus jaga pola makan seimbang dan bawa ke Posyandu secara rutin.",
+    message: "Grafik bulan ini bagus! Pertumbuhan anak Anda sesuai jalur StuntGuard. Terus jaga pola makan seimbang dan lakukan pemeriksaan secara rutin.",
   },
   "Gizi Kurang": {
     bg: "bg-red-50",
@@ -33,7 +33,7 @@ const KMS_BANNER: Record<string, { bg: string; border: string; icon: typeof Chec
     icon: AlertTriangle,
     iconColor: "text-red-600",
     title: "Perhatian: Berat Badan di Bawah Garis Merah",
-    message: "Grafik menunjukkan berat badan anak berada di bawah garis merah pertumbuhan. Segera konsultasikan ke Posyandu atau Puskesmas dan perbaiki asupan gizi dengan protein hewani (telur, ikan, ayam).",
+    message: "Grafik menunjukkan berat badan anak berada di bawah garis merah pertumbuhan. Segera konsultasikan ke tenaga kesehatan atau Puskesmas dan perbaiki asupan gizi dengan protein hewani (telur, ikan, ayam).",
   },
   "Gizi Lebih": {
     bg: "bg-amber-50",
@@ -49,13 +49,13 @@ const KMS_BANNER: Record<string, { bg: string; border: string; icon: typeof Chec
     icon: AlertTriangle,
     iconColor: "text-orange-600",
     title: "Perhatian: Risiko Obesitas",
-    message: "Berat badan anak jauh di atas zona normal pertumbuhan. Konsultasikan pola makan ke petugas kesehatan di Posyandu atau Puskesmas untuk panduan lebih lanjut.",
+    message: "Berat badan anak jauh di atas zona normal pertumbuhan. Konsultasikan pola makan ke petugas kesehatan atau Puskesmas untuk panduan lebih lanjut.",
   },
 };
 
 const tips = [
   "💡 ASI eksklusif selama 6 bulan pertama adalah fondasi terbaik untuk tumbuh kembang anak.",
-  "💡 Pemeriksaan rutin setiap bulan ke Posyandu membantu mendeteksi masalah pertumbuhan sejak dini.",
+  "💡 Pemeriksaan rutin setiap bulan ke tenaga kesehatan membantu mendeteksi masalah pertumbuhan sejak dini.",
   "💡 Variasi makanan bergizi (protein hewani, sayur, buah) penting setelah usia 6 bulan.",
   "💡 Imunisasi lengkap membantu melindungi anak dari penyakit yang bisa menghambat pertumbuhan.",
 ];

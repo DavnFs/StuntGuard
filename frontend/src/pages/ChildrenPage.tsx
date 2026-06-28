@@ -12,7 +12,6 @@ const emptyForm: ChildInput = {
   birth_date: "",
   parent_name: "",
   address: "",
-  posyandu_area: "",
 };
 
 const genderLabel: Record<Gender, string> = {
@@ -76,7 +75,6 @@ export default function ChildrenPage() {
       birth_date: child.birth_date,
       parent_name: child.parent_name ?? "",
       address: child.address ?? "",
-      posyandu_area: child.posyandu_area ?? "",
     });
   };
 
@@ -111,8 +109,8 @@ export default function ChildrenPage() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cari nama atau wilayah"
-            aria-label="Cari nama atau wilayah"
+            placeholder="Cari nama"
+            aria-label="Cari nama"
             maxLength={120}
             className="w-full border-0 bg-transparent text-sm outline-none"
           />
@@ -135,14 +133,13 @@ export default function ChildrenPage() {
                     <th className="py-3 pr-4 font-semibold">Gender</th>
                     <th className="py-3 pr-4 font-semibold">Tanggal Lahir</th>
                     <th className="py-3 pr-4 font-semibold">Orang Tua</th>
-                    <th className="py-3 pr-4 font-semibold">Wilayah</th>
                     <th className="py-3 pr-4 font-semibold">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {children.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500">
+                      <td colSpan={5} className="py-6 text-center text-slate-500">
                         Belum ada data balita yang cocok. Tambahkan data baru atau ubah kata pencarian.
                       </td>
                     </tr>
@@ -157,7 +154,6 @@ export default function ChildrenPage() {
                         <td className="py-3 pr-4 text-slate-600">{genderLabel[child.gender]}</td>
                         <td className="py-3 pr-4 text-slate-600">{new Date(child.birth_date).toLocaleDateString("id-ID")}</td>
                         <td className="py-3 pr-4 text-slate-600">{child.parent_name || "-"}</td>
-                        <td className="py-3 pr-4 text-slate-600">{child.posyandu_area || "-"}</td>
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <button
@@ -233,15 +229,6 @@ export default function ChildrenPage() {
                 value={form.parent_name}
                 maxLength={120}
                 onChange={(event) => setForm({ ...form, parent_name: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-              />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Wilayah Posyandu
-              <input
-                value={form.posyandu_area}
-                maxLength={120}
-                onChange={(event) => setForm({ ...form, posyandu_area: event.target.value })}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
               />
             </label>

@@ -94,7 +94,7 @@ export default function ChatbotPage() {
           <p className="text-sm font-semibold text-brand-700">StuntGuard AI Assistant</p>
           <h2 className="mt-1 text-2xl font-bold text-slate-950">Asisten Edukasi Gizi Balita</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Tanyakan seputar stunting, hasil skrining, makanan bergizi, dan kapan perlu ke Posyandu atau Puskesmas.
+            Tanyakan seputar stunting, hasil skrining, makanan bergizi, dan kapan perlu ke Puskesmas.
           </p>
         </div>
         <Link to="/" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">

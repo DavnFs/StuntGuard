@@ -51,7 +51,7 @@ def run_e2e():
 
             # Click suggestions or input message
             print("[E2E] Typing message in chatbot input...")
-            input_selector = "input[placeholder='Tulis pertanyaan gizi balita...']"
+            input_selector = "input[placeholder='Tulis pertanyaan edukasi...']"
             page.wait_for_selector(input_selector)
             page.fill(input_selector, "Apa itu stunting?")
             
@@ -64,8 +64,8 @@ def run_e2e():
             page.locator("div[role='status']").wait_for(state="hidden", timeout=25000)
             
             # Get the second assistant reply container
-            reply_locator = page.locator("div.border-slate-200.bg-white").nth(1)
-            reply_locator.wait_for(state="visible", timeout=5000)
+            reply_locator = page.locator("div.bg-slate-50.border-slate-200").nth(1)
+            reply_locator.wait_for(state="visible", timeout=25000)
             
             # Verify reply is loaded
             reply_text = reply_locator.inner_text()
