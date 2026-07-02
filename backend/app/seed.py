@@ -1,17 +1,31 @@
 from datetime import date
 
 from app import models, schemas
-from app.crud import create_measurement
+from app.crud import create_measurement, create_user
 from app.database import Base, SessionLocal, engine
 from app.ml.predict import predict_nutrition
 
+DEMO_USERS = [
+    {
+        "email": "parent@demo.com",
+        "password": "password",
+        "name": "Orang Tua Demo",
+        "role": "parent",
+    },
+    {
+        "email": "hw@demo.com",
+        "password": "password",
+        "name": "Petugas Kesehatan",
+        "role": "health_worker",
+    },
+]
 
 DEMO_CHILDREN = [
     {
         "name": "Alya Demo",
         "gender": "female",
         "birth_date": date(2022, 9, 15),
-        "parent_name": "Ibu Demo",
+        "parent_name": "Orang Tua Demo",
         "address": "Data demo, bukan identitas asli",
         "posyandu_area": "Melati",
         "measurements": [
@@ -23,7 +37,7 @@ DEMO_CHILDREN = [
         "name": "Bima Demo",
         "gender": "male",
         "birth_date": date(2023, 3, 5),
-        "parent_name": "Ayah Demo",
+        "parent_name": "Orang Tua Demo",
         "address": "Data demo, bukan identitas asli",
         "posyandu_area": "Mawar",
         "measurements": [
@@ -45,19 +59,31 @@ DEMO_CHILDREN = [
     },
 ]
 
-
 def seed() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        if db.query(models.Child).count() > 0:
-            print("Database already has children. Seed skipped.")
+        if db.query(models.User).count() > 0:
+            print("Database already has users. Seed skipped.")
+            return
+
+        parent_user = None
+
+        for user_data in DEMO_USERS:
+            # We filter out role if RegisterRequest doesn't support it
+            req_data = {k: v for k, v in user_data.items() if k != "role"}
+            req = schemas.RegisterRequest(**req_data)
+            user = create_user(db, req)
+            if user_data["email"] == "parent@demo.com":
+                parent_user = user
+
+        if not parent_user:
             return
 
         for item in DEMO_CHILDREN:
             measurements = item["measurements"]
             child_data = {key: value for key, value in item.items() if key != "measurements"}
-            child = models.Child(**child_data)
+            child = models.Child(**child_data, user_id=parent_user.id)
             db.add(child)
             db.commit()
             db.refresh(child)

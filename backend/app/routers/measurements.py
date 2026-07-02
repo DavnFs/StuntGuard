@@ -16,7 +16,7 @@ def get_child_measurements(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    child = crud.get_child(db, child_id)
+    child = crud.get_child(db, child_id, user_id=_current_user.id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
     return crud.list_child_measurements(db, child_id)
@@ -33,7 +33,7 @@ def create_child_measurement(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    child = crud.get_child(db, child_id)
+    child = crud.get_child(db, child_id, user_id=_current_user.id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
     prediction = predict_nutrition(

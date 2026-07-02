@@ -8,6 +8,7 @@ import type {
   ConsultationInput,
   ConsultationStatus,
   LoginRequest,
+  RegisterRequest,
   Measurement,
   MeasurementInput,
   ModelInfo,
@@ -81,6 +82,8 @@ export const api = {
   health: () => apiRequest<{ status: string; service: string }>("/health"),
   login: (payload: LoginRequest) =>
     apiRequest<AuthUser>("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+  register: (payload: RegisterRequest) =>
+    apiRequest<AuthUser>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   getParentDashboard: () => apiRequest<ParentDashboardResponse>("/parent/dashboard"),
   getChildren: (search?: string) => {
     const query = search ? `?search=${encodeURIComponent(search)}` : "";

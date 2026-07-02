@@ -18,7 +18,7 @@ def get_children(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    return crud.list_children(db, search=search, posyandu_area=posyandu_area)
+    return crud.list_children(db, search=search, posyandu_area=posyandu_area, user_id=_current_user.id)
 
 
 @router.post("", response_model=schemas.ChildRead, status_code=status.HTTP_201_CREATED)
@@ -27,7 +27,7 @@ def create_child(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    return crud.create_child(db, payload)
+    return crud.create_child(db, payload, user_id=_current_user.id)
 
 
 @router.get("/{child_id}", response_model=schemas.ChildRead)
@@ -36,7 +36,7 @@ def get_child(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    child = crud.get_child(db, child_id)
+    child = crud.get_child(db, child_id, user_id=_current_user.id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
     return child
@@ -49,7 +49,7 @@ def update_child(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    child = crud.get_child(db, child_id)
+    child = crud.get_child(db, child_id, user_id=_current_user.id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
     return crud.update_child(db, child, payload)
@@ -61,7 +61,7 @@ def delete_child(
     _current_user: AuthenticatedUser = Depends(require_current_user),
     db: Session = Depends(get_db),
 ):
-    child = crud.get_child(db, child_id)
+    child = crud.get_child(db, child_id, user_id=_current_user.id)
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
     crud.delete_child(db, child)

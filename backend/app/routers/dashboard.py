@@ -16,6 +16,7 @@ def parent_dashboard(
 ):
     children = (
         db.query(models.Child)
+        .filter(models.Child.user_id == current_user.id)
         .options(joinedload(models.Child.measurements))
         .order_by(models.Child.created_at.desc())
         .all()

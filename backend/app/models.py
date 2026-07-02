@@ -5,10 +5,29 @@ from sqlalchemy.sql import func
 from app.database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(160), unique=True, index=True, nullable=False)
+    name = Column(String(120), nullable=False)
+    password = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default="parent")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    children = relationship(
+        "Child",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        order_by="Child.created_at",
+    )
+
+
 class Child(Base):
     __tablename__ = "children"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(120), nullable=False, index=True)
     gender = Column(String(10), nullable=False, index=True)
     birth_date = Column(Date, nullable=False)
@@ -23,6 +42,7 @@ class Child(Base):
         cascade="all, delete-orphan",
         order_by="Measurement.measurement_date",
     )
+    user = relationship("User", back_populates="children")
 
 
 class Measurement(Base):

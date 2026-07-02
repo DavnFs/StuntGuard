@@ -30,6 +30,7 @@ class DemoUser:
 
 @dataclass(frozen=True)
 class AuthenticatedUser:
+    id: int
     email: str
     name: str
     role: str
@@ -59,9 +60,13 @@ def _demo_users() -> dict[str, DemoUser]:
     return {parent.email: parent}
 
 
-def authenticate_demo_user(email: str, password: str) -> DemoUser | None:
-    user = _demo_users().get(email.strip().lower())
-    if user is None or not hmac.compare_digest(user.password, password):
+def authenticate_user(db, email: str, password: str):
+    from app import crud
+    import bcrypt
+    user = crud.get_user_by_email(db, email.strip().lower())
+    if user is None:
+        return None
+    if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         return None
     return user
 
@@ -80,9 +85,10 @@ def _decode_segment(segment: str) -> bytes:
     return base64.urlsafe_b64decode(f"{segment}{padding}")
 
 
-def issue_access_token(user: DemoUser) -> tuple[str, int]:
+def issue_access_token(user) -> tuple[str, int]:
     expires_at = int(time.time()) + _env_int("DEMO_AUTH_TOKEN_TTL_SECONDS", 8 * 60 * 60)
     payload = {
+        "id": user.id,
         "sub": user.email,
         "role": user.role,
         "exp": expires_at,
@@ -110,12 +116,13 @@ def validate_access_token(token: str) -> AuthenticatedUser | None:
         if not isinstance(payload, dict) or int(payload.get("exp", 0)) <= int(time.time()):
             return None
 
+        user_id = payload.get("id")
         email = str(payload.get("sub", "")).strip().lower()
         role = str(payload.get("role", "")).strip().lower()
-        user = _demo_users().get(email)
-        if user is None or user.role != role:
-            return None
-        return AuthenticatedUser(email=user.email, name=user.name, role=user.role)
+        
+        # Optionally, verify the user still exists in DB
+        # For performance, we can just return it from token payload
+        return AuthenticatedUser(id=user_id, email=email, name="", role=role)
     except (UnicodeDecodeError, ValueError, TypeError, json.JSONDecodeError):
         return None
 

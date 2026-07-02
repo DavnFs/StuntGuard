@@ -188,6 +188,14 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="mt-6 text-center text-sm text-slate-500">
+              Belum punya akun?{" "}
+              <Link to="/register" className="font-bold text-cyan-600 hover:text-cyan-700">
+                Daftar sekarang
+              </Link>
+            </div>
+
+
           </div>
         </section>
 

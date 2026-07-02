@@ -20,7 +20,7 @@ import {
   Brain,
   HelpCircle,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -123,6 +123,7 @@ interface PredictionResultCardProps {
 }
 
 export default function PredictionResultCard({ result, childContext, onCheckAgain }: PredictionResultCardProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>("ringkasan");
   const [curveType, setCurveType] = useState<"height" | "weight">("height");
   const tone = statusTone[result.nutrition_status];
@@ -135,6 +136,17 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
       window.sessionStorage.setItem("stuntguard_last_child_context", JSON.stringify(childContext));
     }
     window.dispatchEvent(new CustomEvent("open-chatbot"));
+  };
+
+  const handleSave = () => {
+    const payload = {
+      measurement_date: new Date().toISOString().split("T")[0],
+      age_month: childContext?.age_month ?? 0,
+      height_cm: childContext?.height_cm ?? 0,
+      weight_kg: childContext?.weight_kg ?? 0,
+    };
+    sessionStorage.setItem("pendingMeasurement", JSON.stringify(payload));
+    navigate("/app/save-measurement");
   };
 
   // Dynamic growth standard variables
@@ -511,10 +523,13 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
                     <MessageCircle className="h-4 w-4" />
                     Konsultasi Asisten AI Gizi
                   </Link>
-                  <Link to="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-350 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                  <button
+                    onClick={handleSave}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-350 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                  >
                     <Save className="h-4 w-4" />
                     Simpan Riwayat Pertumbuhan
-                  </Link>
+                  </button>
                 </>
               ) : (
                 <>
@@ -526,6 +541,13 @@ export default function PredictionResultCard({ result, childContext, onCheckAgai
                     <MessageCircle className="h-4 w-4" />
                     Pelajari Edukasi MPASI
                   </Link>
+                  <button
+                    onClick={handleSave}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-350 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    <Save className="h-4 w-4" />
+                    Simpan
+                  </button>
                   {onCheckAgain && (
                     <button
                       type="button"

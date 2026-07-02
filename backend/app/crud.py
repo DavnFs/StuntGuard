@@ -6,16 +6,35 @@ from sqlalchemy.orm import Session, joinedload
 from app import models, schemas
 
 
-def get_child(db: Session, child_id: int) -> Optional[models.Child]:
-    return db.query(models.Child).filter(models.Child.id == child_id).first()
+import bcrypt
 
+def get_child(db: Session, child_id: int, user_id: Optional[int] = None) -> Optional[models.Child]:
+    query = db.query(models.Child).filter(models.Child.id == child_id)
+    if user_id:
+        query = query.filter(models.Child.user_id == user_id)
+    return query.first()
+
+
+def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
+    return db.query(models.User).filter(models.User.email == email).first()
+
+def create_user(db: Session, payload: schemas.RegisterRequest) -> models.User:
+    hashed = bcrypt.hashpw(payload.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    user = models.User(email=payload.email, name=payload.name, password=hashed)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 def list_children(
     db: Session,
     search: Optional[str] = None,
     posyandu_area: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> list[models.Child]:
     query = db.query(models.Child)
+    if user_id:
+        query = query.filter(models.Child.user_id == user_id)
     if search:
         pattern = f"%{search.strip()}%"
         query = query.filter(
@@ -30,8 +49,8 @@ def list_children(
     return query.order_by(models.Child.created_at.desc()).all()
 
 
-def create_child(db: Session, payload: schemas.ChildCreate) -> models.Child:
-    child = models.Child(**payload.model_dump())
+def create_child(db: Session, payload: schemas.ChildCreate, user_id: int) -> models.Child:
+    child = models.Child(**payload.model_dump(), user_id=user_id)
     db.add(child)
     db.commit()
     db.refresh(child)

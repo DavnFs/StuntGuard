@@ -250,6 +250,22 @@ class LoginRequest(BaseModel):
         return _strip_required(value).lower()
 
 
+class RegisterRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    email: str = Field(..., min_length=3, max_length=160)
+    password: str = Field(..., min_length=6, max_length=160)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return _strip_required(value).lower()
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        return _strip_required(value)
+
+
 class LoginResponse(BaseModel):
     token: str
     expires_at: int

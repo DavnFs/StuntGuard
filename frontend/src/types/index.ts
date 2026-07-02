@@ -157,6 +157,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export interface Consultation {
   id: number;
   child_id: number;
